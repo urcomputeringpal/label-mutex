@@ -9,6 +9,17 @@ inputs:
   label:
     description: The name of the label
     required: true
+  lock:
+    description: The name of the lock
+    required: true
+  table:
+    description: The name of the table
+    required: false
+    default: label-mutex
+  column:
+    description: The name of the column
+    required: false
+    default: label
 runs:
   using: docker
   image: Dockerfile
