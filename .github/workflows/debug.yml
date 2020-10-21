@@ -1,5 +1,6 @@
 name: debug
-pull_request:
+on:
+  pull_request:
     types: [opened, synchronize, reopened, closed, labeled, unlabeled]
 
 jobs:
