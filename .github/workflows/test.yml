@@ -6,7 +6,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - name: test
-      uses: ./
-      with:
-        label: test
+      - uses: actions/checkout@v2
+      - name: test
+        uses: ./
+        with:
+          label: test
