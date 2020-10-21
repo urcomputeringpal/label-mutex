@@ -1,0 +1,12 @@
+name: debug
+pull_request:
+    types: [opened, synchronize, reopened, closed, labeled, unlabeled]
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump GitHub Event
+        run: |
+            echo $GITHUB_EVENT_NAME.${{ github.event.action }}.json
+            cat $GITHUB_EVENT_PATH
