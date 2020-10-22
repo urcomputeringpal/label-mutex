@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -51,6 +52,9 @@ func (ll *uriLocker) Lock(uri string) (bool, string, error) {
 			return false, "", resultErr.ErrorOrNil()
 		}
 		return false, string(value.BytesValue()), resultErr.ErrorOrNil()
+	}
+	if !success && uri == "" && resultErr.ErrorOrNil() == nil {
+		return false, "", errors.New("Unknown error setting lock. Please confirm AWS environment variables are configured appropriately")
 	}
 	return success, uri, resultErr.ErrorOrNil()
 }

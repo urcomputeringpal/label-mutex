@@ -87,7 +87,6 @@ func (lm *LabelMutex) process() error {
 	}
 	if hasLockRequestLabel && !hasLockConfirmedLabel {
 		success, existingValue, lockErr := lm.uriLocker.Lock(lm.pr.GetHTMLURL())
-		githubactions.Warningf("tried to obtain lock: %+v, %+v, %+v", success, existingValue, lockErr)
 		if success {
 			lm.locked = true
 			labelsToAdd := []string{fmt.Sprintf("%s:%s", lm.label, lockedSuffix)}
@@ -101,9 +100,7 @@ func (lm *LabelMutex) process() error {
 			lm.lockOwner = existingValue
 			return nil
 		}
-		if lockErr != nil {
-			return lockErr
-		}
+		return lockErr
 	}
 
 	return resultErr.ErrorOrNil()
