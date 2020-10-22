@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"testing"
@@ -37,12 +38,15 @@ func (l *racyMockLocker) Lock(v string) (bool, string, error) {
 		l.value = v
 		return true, v, nil
 	}
-	return false, l.value, errors.New("some imaginary lock conflict error")
+	return false, l.value, errors.New("lock already held")
 }
 
-func (l *racyMockLocker) Unlock() error {
-	l.value = ""
-	return nil
+func (l *racyMockLocker) Unlock(v string) error {
+	if l.value == v {
+		l.value = ""
+		return nil
+	}
+	return fmt.Errorf("Couldn't unlock with provided value of %s, lock currently held by %s", v, l.value)
 }
 
 func TestNoop(t *testing.T) {

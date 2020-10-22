@@ -20,8 +20,8 @@ type URILocker interface {
 	// Lock will store the provided URI in the configured lock store, representing its claim on a shared resource
 	Lock(string) (bool, string, error)
 
-	// Unlock will clear the lock so that someone else may obtain it
-	Unlock() error
+	// Unlock will clear the lock so that someone else may obtain it. An error will be returned if the value has changed.
+	Unlock(string) error
 }
 
 // NewDynamoURILocker initializes a URILocker
@@ -59,6 +59,15 @@ func (ll *uriLocker) Lock(uri string) (bool, string, error) {
 	return success, uri, resultErr.ErrorOrNil()
 }
 
-func (ll *uriLocker) Unlock() error {
-	return ll.dynalock.Delete(ll.name)
+func (ll *uriLocker) Unlock(uri string) error {
+	value, getErr := ll.dynalock.Get(ll.name)
+	if getErr != nil {
+		return getErr
+	}
+	currentLockHolder := string(value.BytesValue())
+	if currentLockHolder != uri {
+		return fmt.Errorf("Couldn't unlock with provided value of %s, lock currently held by %s", uri, currentLockHolder)
+	}
+	_, err := ll.dynalock.AtomicDelete(ll.name, value)
+	return err
 }

@@ -58,8 +58,12 @@ func (lm *LabelMutex) process() error {
 			hasLockConfirmedLabel = true
 		}
 	}
+	lockvalue := lm.pr.GetHTMLURL()
 	if lm.pr.GetState() != "open" {
-		err = lm.uriLocker.Unlock()
+		err = lm.uriLocker.Unlock(lockvalue)
+		if err == nil {
+			lm.locked = false
+		}
 		multierror.Append(resultErr, err)
 
 		_, err = lm.issuesClient.RemoveLabelForIssue(lm.context, lm.pr.GetBase().Repo.Owner.GetLogin(), lm.pr.GetBase().Repo.GetName(), lm.pr.GetNumber(), lm.label)
@@ -73,20 +77,20 @@ func (lm *LabelMutex) process() error {
 
 	if hasLockRequestLabel && hasLockConfirmedLabel {
 		// double check
-		success, existingValue, lockErr := lm.uriLocker.Lock(lm.pr.GetHTMLURL())
+		success, existingValue, lockErr := lm.uriLocker.Lock(lockvalue)
 		if success {
 			lm.locked = true
 			githubactions.Warningf("weird, the lock should have already been ours!")
 			return nil
 		}
-		if existingValue == lm.pr.GetHTMLURL() {
+		if existingValue == lockvalue {
 			lm.locked = true
 			return nil
 		}
 		return lockErr
 	}
 	if hasLockRequestLabel && !hasLockConfirmedLabel {
-		success, existingValue, lockErr := lm.uriLocker.Lock(lm.pr.GetHTMLURL())
+		success, existingValue, lockErr := lm.uriLocker.Lock(lockvalue)
 		if success {
 			lm.locked = true
 			labelsToAdd := []string{fmt.Sprintf("%s:%s", lm.label, lockedSuffix)}
