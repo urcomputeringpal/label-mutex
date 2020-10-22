@@ -25,6 +25,7 @@ jobs:
             --key-schema AttributeName=lock,KeyType=HASH
       - name: test
         uses: ./
+        env:
           AWS_DYNAMODB_ENDPOINT_URL: http://dynamodb:8000
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
