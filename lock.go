@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -42,6 +43,7 @@ func NewDynamoURILocker(table string, column string, name string) (URILocker, er
 }
 
 func (ll *uriLocker) Lock(uri string) (bool, string, error) {
+	log.Printf("Attempting to lock %s with value of %s ...\n", ll.name, uri)
 	var resultErr *multierror.Error
 	success, _, putErr := ll.dynalock.AtomicPut(ll.name, dynalock.WriteWithBytes([]byte(uri)))
 	if putErr != nil {
@@ -53,6 +55,7 @@ func (ll *uriLocker) Lock(uri string) (bool, string, error) {
 		}
 		return false, string(value.BytesValue()), resultErr.ErrorOrNil()
 	}
+	// TODO this isn't being hit
 	if !success && uri == "" && resultErr.ErrorOrNil() == nil {
 		return false, "", errors.New("Unknown error setting lock. Please confirm AWS environment variables are configured appropriately")
 	}
@@ -60,6 +63,7 @@ func (ll *uriLocker) Lock(uri string) (bool, string, error) {
 }
 
 func (ll *uriLocker) Unlock(uri string) error {
+	log.Printf("Attempting to unlock %s with value of %s ...\n", ll.name, uri)
 	value, getErr := ll.dynalock.Get(ll.name)
 	if getErr != nil {
 		return getErr

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 
 	"github.com/google/go-github/v32/github"
 	"github.com/hashicorp/go-multierror"
@@ -58,9 +59,9 @@ func (lm *LabelMutex) process() error {
 			hasLockConfirmedLabel = true
 		}
 	}
-	lockvalue := lm.pr.GetHTMLURL()
+	lockValue := lm.pr.GetHTMLURL()
 	if lm.pr.GetState() != "open" {
-		err = lm.uriLocker.Unlock(lockvalue)
+		err = lm.uriLocker.Unlock(lockValue)
 		if err == nil {
 			lm.locked = false
 		}
@@ -76,22 +77,26 @@ func (lm *LabelMutex) process() error {
 	}
 
 	if hasLockRequestLabel && hasLockConfirmedLabel {
+		log.Printf("Lock should already be owned by %s, confirming  ...\n", lockValue)
+
 		// double check
-		success, existingValue, lockErr := lm.uriLocker.Lock(lockvalue)
+		success, existingValue, lockErr := lm.uriLocker.Lock(lockValue)
 		if success {
 			lm.locked = true
 			githubactions.Warningf("weird, the lock should have already been ours!")
 			return nil
 		}
-		if existingValue == lockvalue {
+		if existingValue == lockValue {
 			lm.locked = true
 			return nil
 		}
 		return lockErr
 	}
 	if hasLockRequestLabel && !hasLockConfirmedLabel {
-		success, existingValue, lockErr := lm.uriLocker.Lock(lockvalue)
+		log.Printf("Lock requested but not confirmed, trying to lock with %s  ...\n", lockValue)
+		success, existingValue, lockErr := lm.uriLocker.Lock(lockValue)
 		if success {
+			log.Println("Lock obtained")
 			lm.locked = true
 			labelsToAdd := []string{fmt.Sprintf("%s:%s", lm.label, lockedSuffix)}
 			_, _, err := lm.issuesClient.AddLabelsToIssue(lm.context, lm.pr.GetBase().Repo.Owner.GetLogin(), lm.pr.GetBase().Repo.GetName(), lm.pr.GetNumber(), labelsToAdd)
@@ -101,11 +106,14 @@ func (lm *LabelMutex) process() error {
 			return nil
 		}
 		if existingValue != "" {
+			log.Printf("Lock already claimed by %s  ...\n", existingValue)
 			lm.lockOwner = existingValue
 			return nil
 		}
+		log.Printf("Unknown error obtaining lock %+v  ...\n", lockErr)
 		return lockErr
 	}
 
+	log.Printf("Label %s not present, doing nothing.\n", lm.label)
 	return resultErr.ErrorOrNil()
 }
