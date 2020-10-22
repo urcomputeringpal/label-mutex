@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 
@@ -95,6 +96,9 @@ func (lm *LabelMutex) process() error {
 	if hasLockRequestLabel && !hasLockConfirmedLabel {
 		log.Printf("Lock requested but not confirmed, trying to lock with %s  ...\n", lockValue)
 		success, existingValue, lockErr := lm.uriLocker.Lock(lockValue)
+		if lockErr != nil {
+			return lockErr
+		}
 		if success {
 			log.Println("Lock obtained")
 			lm.locked = true
@@ -110,8 +114,7 @@ func (lm *LabelMutex) process() error {
 			lm.lockOwner = existingValue
 			return nil
 		}
-		log.Printf("Unknown error obtaining lock %+v  ...\n", lockErr)
-		return lockErr
+		return errors.New("Unknown error")
 	}
 
 	log.Printf("Label %s not present, doing nothing.\n", lm.label)

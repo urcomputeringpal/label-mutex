@@ -46,12 +46,12 @@ func (ll *uriLocker) Lock(uri string) (bool, string, error) {
 	var resultErr *multierror.Error
 	success, _, putErr := ll.dynalock.AtomicPut(ll.name, dynalock.WriteWithBytes([]byte(uri)))
 	if putErr != nil {
-		log.Printf("Error obtaining lock, tryna figure out what the current value is. %+v\n", putErr)
 		multierror.Append(resultErr, putErr)
+		log.Printf("Error obtaining lock, tryna figure out what the current value is. %+v\n", resultErr.ErrorOrNil())
 		value, getErr := ll.dynalock.Get(ll.name)
 		if getErr != nil {
 			multierror.Append(resultErr, getErr)
-			log.Printf("Error reading current lock value too. %+v\n", getErr)
+			log.Printf("Error reading current lock value too. %+v\n", resultErr.ErrorOrNil())
 			return false, "", resultErr.ErrorOrNil()
 		}
 		log.Printf("Current lock value found, still returning an error tho. %+v\n", resultErr.ErrorOrNil())
