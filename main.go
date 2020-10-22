@@ -49,7 +49,7 @@ func main() {
 	}
 	err = labelMutex.process()
 	if err != nil {
-		githubactions.Fatalf("Couldn't initialize: %+v", err)
+		githubactions.Fatalf("error while processing event: %+v", err)
 	}
 }
 

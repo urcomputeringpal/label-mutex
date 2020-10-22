@@ -1,0 +1,27 @@
+name: debug
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed, labeled, unlabeled]
+
+jobs:
+  run-action:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: test
+        uses: ./
+        with:
+          label: test
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump GitHub Event
+        run: |
+            echo $GITHUB_EVENT_NAME.${{ github.event.action }}.json
+            echo
+            echo
+            echo
+            cat $GITHUB_EVENT_PATH
+            echo
+            echo
+            echo

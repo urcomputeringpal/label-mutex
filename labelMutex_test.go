@@ -45,6 +45,38 @@ func (l *racyMockLocker) Unlock() error {
 	return nil
 }
 
+func TestNoop(t *testing.T) {
+	event, err := ioutil.ReadFile("testdata/pull_request.synchronize.json")
+	lm := &LabelMutex{
+		context:      context.Background(),
+		issuesClient: &happyPathLabelClient{},
+		uriLocker:    &racyMockLocker{},
+		event:        event,
+		eventName:    "pull_request",
+		label:        "staging",
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err = lm.process(); err != nil {
+		t.Fatal(err)
+	}
+
+	if lm.action != "synchronize" {
+		t.Fatalf("Expected action to be synchronize: %+v", lm.action)
+	}
+
+	if lm.pr.GetBase().Repo.Owner.GetLogin() != "urcomputeringpal" {
+		t.Fatalf("Expected org to be urcomputeringpal: %+v", lm.pr)
+	}
+
+	if lm.locked {
+		t.Fatalf("Expected lock to not have been obtained: %+v", lm)
+	}
+
+}
+
 func TestLabeled(t *testing.T) {
 	event, err := ioutil.ReadFile("testdata/pull_request.labeled.json")
 	lm := &LabelMutex{

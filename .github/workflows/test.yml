@@ -3,16 +3,6 @@ on:
   - push
 
 jobs:
-  run-action:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: test
-        uses: ./
-        with:
-          label: test
-
-
   go-test:
     strategy:
       matrix:
@@ -27,4 +17,4 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
     - name: Test
-      run: go test ./...
+      run: go test -v ./...
