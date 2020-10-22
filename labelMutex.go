@@ -66,13 +66,13 @@ func (lm *LabelMutex) process() error {
 		if err == nil {
 			lm.locked = false
 		}
-		multierror.Append(resultErr, err)
+		resultErr = multierror.Append(resultErr, err)
 
 		_, err = lm.issuesClient.RemoveLabelForIssue(lm.context, lm.pr.GetBase().Repo.Owner.GetLogin(), lm.pr.GetBase().Repo.GetName(), lm.pr.GetNumber(), lm.label)
-		multierror.Append(resultErr, err)
+		resultErr = multierror.Append(resultErr, err)
 
 		_, err = lm.issuesClient.RemoveLabelForIssue(lm.context, lm.pr.GetBase().Repo.Owner.GetLogin(), lm.pr.GetBase().Repo.GetName(), lm.pr.GetNumber(), fmt.Sprintf("%s:%s", lm.label, lockedSuffix))
-		multierror.Append(resultErr, err)
+		resultErr = multierror.Append(resultErr, err)
 
 		return resultErr.ErrorOrNil()
 	}

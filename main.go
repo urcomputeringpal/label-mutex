@@ -64,19 +64,19 @@ type config struct {
 func (c *config) Validate() error {
 	var resultErr *multierror.Error
 	if c.githubToken == "" {
-		multierror.Append(resultErr, errors.New("input 'GITHUB_TOKEN' missing"))
+		resultErr = multierror.Append(resultErr, errors.New("input 'GITHUB_TOKEN' missing"))
 	}
 	if c.label == "" {
-		multierror.Append(resultErr, errors.New("input 'label' missing"))
+		resultErr = multierror.Append(resultErr, errors.New("input 'label' missing"))
 	}
 	if c.table == "" {
-		multierror.Append(resultErr, errors.New("input 'table' missing"))
+		resultErr = multierror.Append(resultErr, errors.New("input 'table' missing"))
 	}
 	if c.column == "" {
-		multierror.Append(resultErr, errors.New("input 'column' missing"))
+		resultErr = multierror.Append(resultErr, errors.New("input 'column' missing"))
 	}
 	if c.lock == "" {
-		multierror.Append(resultErr, errors.New("input 'lock' missing"))
+		resultErr = multierror.Append(resultErr, errors.New("input 'lock' missing"))
 	}
 	return resultErr.ErrorOrNil()
 }
