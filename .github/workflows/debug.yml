@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v2
       - run: |
           aws dynamodb create-table \
-            --endpoint-url http://localhost:8000
+            --endpoint-url http://localhost:8000 \
             --table-name label-mutex \
             --attribute-definitions AttributeName=lock,AttributeType=S \
             --key-schema AttributeName=lock,KeyType=HASH
