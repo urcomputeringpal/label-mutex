@@ -109,5 +109,5 @@ func (lm *LabelMutex) process() error {
 		}
 	}
 
-	return resultErr
+	return resultErr.ErrorOrNil()
 }
