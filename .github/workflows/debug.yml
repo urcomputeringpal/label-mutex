@@ -6,10 +6,20 @@ on:
 jobs:
   run-action:
     runs-on: ubuntu-latest
+    services:
+      dynamodb:
+        image: amazon/dynamodb-local
+        ports:
+          - 8000:8000
     steps:
       - uses: actions/checkout@v2
       - name: test
         uses: ./
+        env:
+          AWS_ACCESS_KEY_ID: "test"
+          AWS_SECRET_ACCESS_KEY: "test"
+          AWS_REGION: us-east-1
+          AWS_DYNAMODB_ENDPOINT_URL: http://localhost:8000
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           label: test

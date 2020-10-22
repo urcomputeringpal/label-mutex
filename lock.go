@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/hashicorp/go-multierror"
@@ -31,7 +33,13 @@ func NewDynamoURILocker(table string, column string, name string) (URILocker, er
 		return nil, fmt.Errorf("failed to create AWS session: %+v", err)
 	}
 
-	d := dynalock.New(dynamodb.New(sess), table, column)
+	customEndpoint := os.Getenv("AWS_DYNAMODB_ENDPOINT_URL")
+	awsConfig := &aws.Config{}
+	if customEndpoint != "" {
+		awsConfig.Endpoint = aws.String(customEndpoint)
+	}
+
+	d := dynalock.New(dynamodb.New(sess, awsConfig), table, column)
 
 	ll := &uriLocker{
 		dynalock: d,
