@@ -13,6 +13,12 @@ jobs:
           - 8000:8000
     steps:
       - uses: actions/checkout@v2
+      - run: |
+          aws dynamodb create-table \
+            --endpoint-url http://localhost:8000
+            --table-name label-mutex \
+            --attribute-definitions AttributeName=lock,AttributeType=S \
+            --key-schema AttributeName=lock,KeyType=HASH
       - name: test
         uses: ./
         env:
@@ -24,16 +30,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           label: test
           lock: test
-  debug:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Dump GitHub Event
-        run: |
-            echo $GITHUB_EVENT_NAME.${{ github.event.action }}.json
-            echo
-            echo
-            echo
-            cat $GITHUB_EVENT_PATH
-            echo
-            echo
-            echo
+  # debug:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Dump GitHub Event
+  #       run: |
+  #           echo $GITHUB_EVENT_NAME.${{ github.event.action }}.json
+  #           echo
+  #           echo
+  #           echo
+  #           cat $GITHUB_EVENT_PATH
+  #           echo
+  #           echo
+  #           echo
