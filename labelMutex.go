@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/go-github/v32/github"
 	"github.com/hashicorp/go-multierror"
+	"github.com/sethvargo/go-githubactions"
 )
 
 var (
@@ -38,6 +39,7 @@ type LabelMutex struct {
 }
 
 func (lm *LabelMutex) process() error {
+	githubactions.Warningf("processing")
 	var resultErr *multierror.Error
 	var pr github.PullRequestEvent
 	err := json.Unmarshal(lm.event, &pr)
@@ -58,6 +60,7 @@ func (lm *LabelMutex) process() error {
 		}
 	}
 	if lm.pr.GetState() != "open" {
+		githubactions.Warningf("removing lock")
 		err = lm.uriLocker.Unlock()
 		multierror.Append(resultErr, err)
 
@@ -71,11 +74,12 @@ func (lm *LabelMutex) process() error {
 	}
 
 	if hasLockRequestLabel && hasLockConfirmedLabel {
+		githubactions.Warningf("double checking lock")
 		// double check
 		success, existingValue, lockErr := lm.uriLocker.Lock(lm.pr.GetHTMLURL())
 		if success {
 			lm.locked = true
-			// TODO indicate a suprising but okay outcome! we obtained the lock when we were supposed to already have it
+			githubactions.Warningf("weird, the lock should have already been obtained!")
 			return nil
 		}
 		if existingValue == lm.pr.GetHTMLURL() {
@@ -85,6 +89,7 @@ func (lm *LabelMutex) process() error {
 		return lockErr
 	}
 	if hasLockRequestLabel && !hasLockConfirmedLabel {
+		githubactions.Warningf("trying to obtain lock")
 		success, existingValue, lockErr := lm.uriLocker.Lock(lm.pr.GetHTMLURL())
 		if success {
 			lm.locked = true
@@ -104,5 +109,5 @@ func (lm *LabelMutex) process() error {
 		}
 	}
 
-	return resultErr.ErrorOrNil()
+	return resultErr
 }
