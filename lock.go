@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"log"
 
@@ -47,18 +46,18 @@ func (ll *uriLocker) Lock(uri string) (bool, string, error) {
 	var resultErr *multierror.Error
 	success, _, putErr := ll.dynalock.AtomicPut(ll.name, dynalock.WriteWithBytes([]byte(uri)))
 	if putErr != nil {
+		log.Printf("Error obtaining lock, tryna figure out what the current value is. %+v\n", putErr)
 		multierror.Append(resultErr, putErr)
 		value, getErr := ll.dynalock.Get(ll.name)
 		if getErr != nil {
 			multierror.Append(resultErr, getErr)
+			log.Printf("Error reading current lock value too. %+v\n", getErr)
 			return false, "", resultErr.ErrorOrNil()
 		}
+		log.Printf("Current lock value found, still returning an error tho. %+v\n", resultErr.ErrorOrNil())
 		return false, string(value.BytesValue()), resultErr.ErrorOrNil()
 	}
-	// TODO this isn't being hit
-	if !success && uri == "" && resultErr.ErrorOrNil() == nil {
-		return false, "", errors.New("Unknown error setting lock. Please confirm AWS environment variables are configured appropriately")
-	}
+	log.Printf("Lock should have been obtained: %+v, %+v, %+v", success, uri, resultErr.ErrorOrNil())
 	return success, uri, resultErr.ErrorOrNil()
 }
 
