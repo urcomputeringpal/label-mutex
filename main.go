@@ -61,7 +61,8 @@ type config struct {
 	lock        string
 }
 
-func (c *config) Validate() (resultErr error) {
+func (c *config) Validate() error {
+	var resultErr *multierror.Error
 	if c.githubToken == "" {
 		multierror.Append(resultErr, errors.New("input 'GITHUB_TOKEN' missing"))
 	}
@@ -77,7 +78,7 @@ func (c *config) Validate() (resultErr error) {
 	if c.lock == "" {
 		multierror.Append(resultErr, errors.New("input 'lock' missing"))
 	}
-	return resultErr
+	return resultErr.ErrorOrNil()
 }
 
 func (c *config) githubClient(ctx context.Context) *github.Client {

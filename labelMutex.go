@@ -37,7 +37,8 @@ type LabelMutex struct {
 	lockOwner          string
 }
 
-func (lm *LabelMutex) process() (resultErr error) {
+func (lm *LabelMutex) process() error {
+	var resultErr *multierror.Error
 	var pr github.PullRequestEvent
 	err := json.Unmarshal(lm.event, &pr)
 	if err != nil {
@@ -66,7 +67,7 @@ func (lm *LabelMutex) process() (resultErr error) {
 		_, err = lm.issuesClient.RemoveLabelForIssue(lm.context, lm.pr.GetBase().Repo.Owner.GetLogin(), lm.pr.GetBase().Repo.GetName(), lm.pr.GetNumber(), fmt.Sprintf("%s:%s", lm.label, lockedSuffix))
 		multierror.Append(resultErr, err)
 
-		return resultErr
+		return resultErr.ErrorOrNil()
 	}
 
 	if hasLockRequestLabel && hasLockConfirmedLabel {
@@ -92,16 +93,16 @@ func (lm *LabelMutex) process() (resultErr error) {
 			if err != nil {
 				return err
 			}
-			return
+			return nil
 		}
 		if existingValue != "" {
 			lm.lockOwner = existingValue
-			return
+			return nil
 		}
 		if lockErr != nil {
 			return lockErr
 		}
 	}
 
-	return resultErr
+	return resultErr.ErrorOrNil()
 }

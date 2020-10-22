@@ -11,7 +11,9 @@ jobs:
       - name: test
         uses: ./
         with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           label: test
+          lock: test
   debug:
     runs-on: ubuntu-latest
     steps:

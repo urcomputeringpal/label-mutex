@@ -4,7 +4,7 @@ branding:
   color: gray-dark
 inputs:
   GITHUB_TOKEN:
-    description: Github token to use to create label
+    description: Github token to use to perform operations
     required: true
   label:
     description: The name of the label

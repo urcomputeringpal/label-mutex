@@ -41,18 +41,18 @@ func NewDynamoURILocker(table string, column string, name string) (URILocker, er
 }
 
 func (ll *uriLocker) Lock(uri string) (bool, string, error) {
-	var resultErr error
+	var resultErr *multierror.Error
 	success, _, putErr := ll.dynalock.AtomicPut(ll.name, dynalock.WriteWithBytes([]byte(uri)))
 	if putErr != nil {
 		multierror.Append(resultErr, putErr)
 		value, getErr := ll.dynalock.Get(ll.name)
 		if getErr != nil {
 			multierror.Append(resultErr, getErr)
-			return false, "", resultErr
+			return false, "", resultErr.ErrorOrNil()
 		}
-		return false, string(value.BytesValue()), resultErr
+		return false, string(value.BytesValue()), resultErr.ErrorOrNil()
 	}
-	return success, uri, resultErr
+	return success, uri, resultErr.ErrorOrNil()
 }
 
 func (ll *uriLocker) Unlock() error {
