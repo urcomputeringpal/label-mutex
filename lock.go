@@ -33,13 +33,17 @@ func NewDynamoURILocker(table string, column string, name string) (URILocker, er
 		return nil, fmt.Errorf("failed to create AWS session: %+v", err)
 	}
 
-	customEndpoint := os.Getenv("AWS_DYNAMODB_ENDPOINT_URL")
-	awsConfig := &aws.Config{}
-	if customEndpoint != "" {
-		awsConfig.Endpoint = aws.String(customEndpoint)
-	}
+	var d dynalock.Store
 
-	d := dynalock.New(dynamodb.New(sess, awsConfig), table, column)
+	customEndpoint := os.Getenv("AWS_DYNAMODB_ENDPOINT_URL")
+	if customEndpoint != "" {
+		d = dynalock.New(dynamodb.New(sess, &aws.Config{
+			Endpoint: aws.String(customEndpoint),
+			Region:   aws.String(os.Getenv("AWS_DEFAULT_REGION")),
+		}), table, column)
+	} else {
+		d = dynalock.New(dynamodb.New(sess), table, column)
+	}
 
 	ll := &uriLocker{
 		dynalock: d,
