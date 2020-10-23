@@ -1,0 +1,26 @@
+version: "3"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        INSTALL_NODE: 'false'
+    volumes:
+      - ..:/workspace:cached
+    user: vscode
+    command: sleep infinity
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      AWS_ACCESS_KEY_ID: "fake"
+      AWS_SECRET_ACCESS_KEY: "fake"
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_PAGER: "" 
+  dynamodb:
+    image: amazon/dynamodb-local
+    ports:
+      - 8000:8000
