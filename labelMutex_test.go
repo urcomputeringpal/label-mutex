@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/google/go-github/v32/github"
@@ -87,6 +88,45 @@ func TestLabeled(t *testing.T) {
 		context:      context.Background(),
 		issuesClient: &happyPathLabelClient{},
 		uriLocker:    &racyMockLocker{},
+		event:        event,
+		eventName:    "pull_request",
+		label:        "staging",
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err = lm.process(); err != nil {
+		t.Fatal(err)
+	}
+
+	if lm.action != "labeled" {
+		t.Fatalf("Expected action to be labeled: %+v", lm.action)
+	}
+
+	if lm.pr.GetHTMLURL() != "https://github.com/urcomputeringpal/label-mutex/pull/1" {
+		t.Fatalf("Expected GetHTMLURL to be a url: %+v", lm.pr.GetHTMLURL())
+	}
+
+	if !lm.locked {
+		t.Fatalf("Expected lock to have been obtained: %+v", lm)
+	}
+
+}
+
+func TestLabeledDynamo(t *testing.T) {
+	os.Setenv("AWS_DYNAMODB_ENDPOINT_URL", "http://dynamodb:8000")
+	os.Setenv("AWS_DEFAULT_REGION", "us-east-1")
+	localDynamoLocker, err := NewDynamoURILocker("label-mutex", "staging", "staging")
+	if err != nil {
+		t.Fatalf("failed to initialize: %+v", err)
+	}
+
+	event, err := ioutil.ReadFile("testdata/pull_request.labeled.json")
+	lm := &LabelMutex{
+		context:      context.Background(),
+		issuesClient: &happyPathLabelClient{},
+		uriLocker:    localDynamoLocker,
 		event:        event,
 		eventName:    "pull_request",
 		label:        "staging",
