@@ -20,6 +20,7 @@ services:
       AWS_SECRET_ACCESS_KEY: "fake"
       AWS_DEFAULT_REGION: us-east-1
       AWS_PAGER: "" 
+      AWS_DYNAMODB_ENDPOINT_URL: http://dynamodb:8000
   dynamodb:
     image: amazon/dynamodb-local
     ports:

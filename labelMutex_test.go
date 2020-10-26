@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"testing"
 
 	"github.com/google/go-github/v32/github"
@@ -115,8 +114,6 @@ func TestLabeled(t *testing.T) {
 }
 
 func TestLabeledDynamo(t *testing.T) {
-	os.Setenv("AWS_DYNAMODB_ENDPOINT_URL", "http://dynamodb:8000")
-	os.Setenv("AWS_DEFAULT_REGION", "us-east-1")
 	localDynamoLocker, err := NewDynamoURILocker("label-mutex", "staging", "staging")
 	if err != nil {
 		t.Fatalf("failed to initialize: %+v", err)

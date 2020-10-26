@@ -7,6 +7,7 @@ env:
   AWS_ACCESS_KEY_ID: "fake"
   AWS_SECRET_ACCESS_KEY: "fake"
   AWS_DEFAULT_REGION: us-east-1
+  AWS_DYNAMODB_ENDPOINT_URL: http://dynamodb:8000
 jobs:
   run-action:
     runs-on: ubuntu-latest
@@ -21,8 +22,6 @@ jobs:
           ./hack/create-local-table.sh http://localhost:8000
       - name: test
         uses: ./
-        env:
-          AWS_DYNAMODB_ENDPOINT_URL: http://dynamodb:8000
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           label: test
