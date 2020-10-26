@@ -78,7 +78,7 @@ func (lm *LabelMutex) process() error {
 	}
 
 	if hasLockRequestLabel && hasLockConfirmedLabel {
-		log.Printf("Lock should already be owned by %s, confirming  ...\n", lockValue)
+		log.Printf("Lock '%s' should already be owned by %s, confirming  ...\n", lm.label, lockValue)
 
 		// double check
 		success, existingValue, lockErr := lm.uriLocker.Lock(lockValue)
@@ -94,13 +94,13 @@ func (lm *LabelMutex) process() error {
 		return lockErr
 	}
 	if hasLockRequestLabel && !hasLockConfirmedLabel {
-		log.Printf("Lock requested but not confirmed, trying to lock with %s  ...\n", lockValue)
+		log.Printf("Lock '%s' requested but not confirmed, trying to lock with %s  ...\n", lm.label, lockValue)
 		success, existingValue, lockErr := lm.uriLocker.Lock(lockValue)
 		if lockErr != nil {
 			return lockErr
 		}
 		if success {
-			log.Println("Lock obtained")
+			log.Printf("Lock '%s' obtained\n", lm.label)
 			lm.locked = true
 			labelsToAdd := []string{fmt.Sprintf("%s:%s", lm.label, lockedSuffix)}
 			_, _, err := lm.issuesClient.AddLabelsToIssue(lm.context, lm.pr.GetBase().Repo.Owner.GetLogin(), lm.pr.GetBase().Repo.GetName(), lm.pr.GetNumber(), labelsToAdd)
@@ -110,13 +110,13 @@ func (lm *LabelMutex) process() error {
 			return nil
 		}
 		if existingValue != "" {
-			log.Printf("Lock already claimed by %s  ...\n", existingValue)
+			log.Printf("Lock '%s' already claimed by %s  ...\n", lm.label, existingValue)
 			lm.lockOwner = existingValue
 			return nil
 		}
 		return errors.New("Unknown error")
 	}
 
-	log.Printf("Label %s not present, doing nothing.\n", lm.label)
+	log.Printf("Label '%s' not present, doing nothing.\n", lm.label)
 	return resultErr.ErrorOrNil()
 }
