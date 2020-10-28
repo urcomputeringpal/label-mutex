@@ -17,7 +17,7 @@ func main() {
 		githubToken: githubactions.GetInput("GITHUB_TOKEN"),
 		label:       githubactions.GetInput("label"),
 		table:       githubactions.GetInput("table"),
-		column:      githubactions.GetInput("column"),
+		partition:   githubactions.GetInput("partition"),
 		lock:        githubactions.GetInput("lock"),
 	}
 	err := c.Validate()
@@ -25,7 +25,7 @@ func main() {
 		githubactions.Fatalf("failed to validate input: %+v", err)
 	}
 
-	uriLocker, err := NewDynamoURILocker(c.table, c.column, c.lock)
+	uriLocker, err := NewDynamoURILocker(c.table, c.partition, c.lock)
 	if err != nil {
 		githubactions.Fatalf("failed to initialize: %+v", err)
 	}
@@ -61,7 +61,7 @@ type config struct {
 	githubToken string
 	label       string
 	table       string
-	column      string
+	partition   string
 	lock        string
 }
 
@@ -76,8 +76,8 @@ func (c *config) Validate() error {
 	if c.table == "" {
 		resultErr = multierror.Append(resultErr, errors.New("input 'table' missing"))
 	}
-	if c.column == "" {
-		resultErr = multierror.Append(resultErr, errors.New("input 'column' missing"))
+	if c.partition == "" {
+		resultErr = multierror.Append(resultErr, errors.New("input 'partition' missing"))
 	}
 	if c.lock == "" {
 		resultErr = multierror.Append(resultErr, errors.New("input 'lock' missing"))

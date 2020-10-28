@@ -6,20 +6,20 @@ inputs:
   GITHUB_TOKEN:
     description: Github token to use to perform operations
     required: true
-  label:
-    description: The name of the label
-    required: true
-  lock:
-    description: The name of the lock
-    required: true
   table:
-    description: The name of the table
+    description: The name of the table that stores the lock
     required: false
     default: label-mutex
-  column:
-    description: The name of the column
+  partition:
+    description: A name for a logical grouping of locks.
     required: false
     default: label
+  lock:
+    description: The name of the lock.
+    required: true
+  label:
+    description: The name of the label used to facilitate control and represent ownership of the lock.
+    required: true
 outputs:
   locked:
     description: "'true' if the lock was obtained. 'false' otherwise."

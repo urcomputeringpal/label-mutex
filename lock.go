@@ -27,7 +27,7 @@ type URILocker interface {
 }
 
 // NewDynamoURILocker initializes a URILocker
-func NewDynamoURILocker(table string, column string, name string) (URILocker, error) {
+func NewDynamoURILocker(table string, partition string, name string) (URILocker, error) {
 	sess, err := session.NewSession()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create AWS session: %+v", err)
@@ -40,9 +40,9 @@ func NewDynamoURILocker(table string, column string, name string) (URILocker, er
 		d = dynalock.New(dynamodb.New(sess, &aws.Config{
 			Endpoint: aws.String(customEndpoint),
 			Region:   aws.String(os.Getenv("AWS_DEFAULT_REGION")),
-		}), table, column)
+		}), table, partition)
 	} else {
-		d = dynalock.New(dynamodb.New(sess), table, column)
+		d = dynalock.New(dynamodb.New(sess), table, partition)
 	}
 
 	ll := &uriLocker{
