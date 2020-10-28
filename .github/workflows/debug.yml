@@ -1,0 +1,41 @@
+name: debug
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed, labeled, unlabeled]
+
+env:
+  AWS_ACCESS_KEY_ID: "fake"
+  AWS_SECRET_ACCESS_KEY: "fake"
+  AWS_DEFAULT_REGION: us-east-1
+  AWS_DYNAMODB_ENDPOINT_URL: http://dynamodb:8000
+jobs:
+  run-action:
+    runs-on: ubuntu-latest
+    services:
+      dynamodb:
+        image: amazon/dynamodb-local
+        ports:
+          - 8000:8000
+    steps:
+      - uses: actions/checkout@v2
+      - run: |
+          ./hack/create-local-table.sh http://localhost:8000
+      - name: test
+        uses: ./
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          label: test
+          lock: test
+  # debug:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Dump GitHub Event
+  #       run: |
+  #           echo $GITHUB_EVENT_NAME.${{ github.event.action }}.json
+  #           echo
+  #           echo
+  #           echo
+  #           cat $GITHUB_EVENT_PATH
+  #           echo
+  #           echo
+  #           echo

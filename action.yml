@@ -4,11 +4,27 @@ branding:
   color: gray-dark
 inputs:
   GITHUB_TOKEN:
-    description: Github token to use to create label
+    description: Github token to use to perform operations
+    required: true
+  table:
+    description: The name of the table that stores the lock
+    required: false
+    default: label-mutex
+  partition:
+    description: A name for a logical grouping of locks.
+    required: false
+    default: label
+  lock:
+    description: The name of the lock.
     required: true
   label:
-    description: The name of the label
+    description: The name of the label used to facilitate control and represent ownership of the lock.
     required: true
+outputs:
+  locked:
+    description: "'true' if the lock was obtained. 'false' otherwise."
+  unlocked:
+    description: "'true' if the lock was obtained. 'false' otherwise."
 runs:
   using: docker
   image: Dockerfile

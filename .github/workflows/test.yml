@@ -2,12 +2,32 @@ name: test
 on:
   - push
 
+
+env:
+  AWS_ACCESS_KEY_ID: "fake"
+  AWS_SECRET_ACCESS_KEY: "fake"
+  AWS_DEFAULT_REGION: us-east-1
+  AWS_DYNAMODB_ENDPOINT_URL: http://localhost:8000
 jobs:
-  test:
-    runs-on: ubuntu-latest
+  go-test:
+    strategy:
+      matrix:
+        go-version: [1.15.x]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    services:
+      dynamodb:
+        image: amazon/dynamodb-local
+        ports:
+          - 8000:8000
     steps:
-      - uses: actions/checkout@v2
-      - name: test
-        uses: ./
-        with:
-          label: test
+    - name: Install Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ matrix.go-version }}
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Create local table
+      run: ./hack/create-local-table.sh http://localhost:8000
+    - name: Test
+      run: go test -v ./...
