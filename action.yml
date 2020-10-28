@@ -23,6 +23,8 @@ inputs:
 outputs:
   locked:
     description: 'true' if the lock was obtained. 'false' otherwise.
+  unlocked:
+    description: 'true' if the PR was unlocked. 'false' otherwise.
 runs:
   using: docker
   image: Dockerfile
