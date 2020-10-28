@@ -40,6 +40,16 @@ type LabelMutex struct {
 	lockOwner          string
 }
 
+func (lm *LabelMutex) output() map[string]string {
+	output := make(map[string]string)
+	if lm.locked {
+		output["locked"] = "true"
+	} else {
+		output["locked"] = "false"
+	}
+	return output
+}
+
 func (lm *LabelMutex) process() error {
 	var resultErr *multierror.Error
 	var pr github.PullRequestEvent

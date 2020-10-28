@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/google/uuid"
+
 	"github.com/google/go-github/v32/github"
 )
 
@@ -49,103 +51,90 @@ func (l *racyMockLocker) Unlock(v string) error {
 	return fmt.Errorf("Couldn't unlock with provided value of %s, lock currently held by %s", v, l.value)
 }
 
-func TestNoop(t *testing.T) {
-	event, err := ioutil.ReadFile("testdata/pull_request.synchronize.json")
-	lm := &LabelMutex{
-		context:      context.Background(),
-		issuesClient: &happyPathLabelClient{},
-		uriLocker:    &racyMockLocker{},
-		event:        event,
-		eventName:    "pull_request",
-		label:        "staging",
-	}
+func uuidLocker() URILocker {
+	localDynamoLocker, err := NewDynamoURILocker("label-mutex", "staging", fmt.Sprintf("%v", uuid.New()))
 	if err != nil {
-		t.Fatal(err)
+		panic(err)
 	}
-
-	if err = lm.process(); err != nil {
-		t.Fatal(err)
-	}
-
-	if lm.action != "synchronize" {
-		t.Fatalf("Expected action to be synchronize: %+v", lm.action)
-	}
-
-	if lm.pr.GetBase().Repo.Owner.GetLogin() != "urcomputeringpal" {
-		t.Fatalf("Expected org to be urcomputeringpal: %+v", lm.pr)
-	}
-
-	if lm.locked {
-		t.Fatalf("Expected lock to not have been obtained: %+v", lm)
-	}
-
+	return localDynamoLocker
 }
 
-func TestLabeled(t *testing.T) {
-	event, err := ioutil.ReadFile("testdata/pull_request.labeled.json")
-	lm := &LabelMutex{
-		context:      context.Background(),
-		issuesClient: &happyPathLabelClient{},
-		uriLocker:    &racyMockLocker{},
-		event:        event,
-		eventName:    "pull_request",
-		label:        "staging",
-	}
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if err = lm.process(); err != nil {
-		t.Fatal(err)
-	}
-
-	if lm.action != "labeled" {
-		t.Fatalf("Expected action to be labeled: %+v", lm.action)
-	}
-
-	if lm.pr.GetHTMLURL() != "https://github.com/urcomputeringpal/label-mutex/pull/1" {
-		t.Fatalf("Expected GetHTMLURL to be a url: %+v", lm.pr.GetHTMLURL())
-	}
-
-	if !lm.locked {
-		t.Fatalf("Expected lock to have been obtained: %+v", lm)
-	}
-
+var tests = []struct {
+	eventFilename string
+	eventName     string
+	label         string
+	issuesClient  issuesService
+	uriLocker     URILocker
+	err           bool
+	locked        bool
+	lockedOutput  string
+}{
+	{
+		eventFilename: "testdata/pull_request.synchronize.json",
+		eventName:     "pull_request",
+		label:         "staging",
+		issuesClient:  &happyPathLabelClient{},
+		uriLocker:     &racyMockLocker{},
+		err:           false,
+		locked:        false,
+		lockedOutput:  "false",
+	},
+	{
+		eventFilename: "testdata/pull_request.labeled.json",
+		eventName:     "pull_request",
+		label:         "staging",
+		issuesClient:  &happyPathLabelClient{},
+		uriLocker:     &racyMockLocker{},
+		err:           false,
+		locked:        true,
+		lockedOutput:  "true",
+	},
+	{
+		eventFilename: "testdata/pull_request.labeled.json",
+		eventName:     "pull_request",
+		label:         "staging",
+		issuesClient:  &happyPathLabelClient{},
+		uriLocker:     uuidLocker(),
+		err:           false,
+		locked:        true,
+		lockedOutput:  "true",
+	},
 }
 
-func TestLabeledDynamo(t *testing.T) {
-	localDynamoLocker, err := NewDynamoURILocker("label-mutex", "staging", "staging")
-	if err != nil {
-		t.Fatalf("failed to initialize: %+v", err)
-	}
+func TestTable(t *testing.T) {
+	for _, tt := range tests {
+		t.Run(tt.eventFilename, func(t *testing.T) {
+			event, err := ioutil.ReadFile(tt.eventFilename)
+			if err != nil {
+				t.Errorf("%s: %+v", tt.eventFilename, err)
+				return
+			}
 
-	event, err := ioutil.ReadFile("testdata/pull_request.labeled.json")
-	lm := &LabelMutex{
-		context:      context.Background(),
-		issuesClient: &happyPathLabelClient{},
-		uriLocker:    localDynamoLocker,
-		event:        event,
-		eventName:    "pull_request",
-		label:        "staging",
-	}
-	if err != nil {
-		t.Fatal(err)
-	}
+			lm := &LabelMutex{
+				context:      context.Background(),
+				issuesClient: tt.issuesClient,
+				uriLocker:    tt.uriLocker,
+				event:        event,
+				eventName:    "pull_request",
+				label:        "staging",
+			}
+			err = lm.process()
+			if !tt.err && err != nil {
+				t.Errorf("%s: %+v", tt.eventFilename, err)
+				return
+			}
+			if tt.err && err == nil {
+				t.Errorf("%s: expected an error, didn't get one", tt.eventFilename)
+				return
+			}
 
-	if err = lm.process(); err != nil {
-		t.Fatal(err)
+			if lm.locked != tt.locked {
+				t.Errorf("%s: locked: got %v, want %v", tt.eventFilename, lm.locked, tt.locked)
+			}
+			output := lm.output()
+			if output["locked"] != tt.lockedOutput {
+				t.Errorf("%s: output: got %v, want %v", tt.eventFilename, lm.locked, tt.locked)
+			}
+		})
 	}
-
-	if lm.action != "labeled" {
-		t.Fatalf("Expected action to be labeled: %+v", lm.action)
-	}
-
-	if lm.pr.GetHTMLURL() != "https://github.com/urcomputeringpal/label-mutex/pull/1" {
-		t.Fatalf("Expected GetHTMLURL to be a url: %+v", lm.pr.GetHTMLURL())
-	}
-
-	if !lm.locked {
-		t.Fatalf("Expected lock to have been obtained: %+v", lm)
-	}
-
 }

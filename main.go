@@ -51,6 +51,10 @@ func main() {
 	if err != nil {
 		githubactions.Fatalf("error while processing event: %+v", err)
 	}
+	output := labelMutex.output()
+	for k, v := range output {
+		githubactions.SetOutput(k, v)
+	}
 }
 
 type config struct {
