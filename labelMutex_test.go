@@ -59,46 +59,93 @@ func uuidLocker() URILocker {
 	return localDynamoLocker
 }
 
-var tests = []struct {
-	eventFilename string
-	eventName     string
-	label         string
-	issuesClient  issuesService
-	uriLocker     URILocker
-	err           bool
-	locked        bool
-	lockedOutput  string
-}{
-	{
-		eventFilename: "testdata/pull_request.synchronize.json",
-		eventName:     "pull_request",
-		label:         "staging",
-		issuesClient:  &happyPathLabelClient{},
-		uriLocker:     &racyMockLocker{},
-		err:           false,
-		locked:        false,
-		lockedOutput:  "false",
-	},
-	{
-		eventFilename: "testdata/pull_request.labeled.json",
-		eventName:     "pull_request",
-		label:         "staging",
-		issuesClient:  &happyPathLabelClient{},
-		uriLocker:     &racyMockLocker{},
-		err:           false,
-		locked:        true,
-		lockedOutput:  "true",
-	},
-	{
-		eventFilename: "testdata/pull_request.labeled.json",
-		eventName:     "pull_request",
-		label:         "staging",
-		issuesClient:  &happyPathLabelClient{},
-		uriLocker:     uuidLocker(),
-		err:           false,
-		locked:        true,
-		lockedOutput:  "true",
-	},
+type labelMutexTest struct {
+	eventFilename  string
+	eventName      string
+	label          string
+	issuesClient   issuesService
+	uriLocker      URILocker
+	err            bool
+	locked         bool
+	lockedOutput   string
+	unlockedOutput string
+}
+
+var URILockerOne URILocker
+var URILockerTwo URILocker
+var tests []labelMutexTest
+
+func init() {
+	URILockerOne = uuidLocker()
+	URILockerTwo = uuidLocker()
+	tests = []labelMutexTest{
+		{
+			eventFilename:  "testdata/pull_request.synchronize.json",
+			eventName:      "pull_request",
+			label:          "staging",
+			issuesClient:   &happyPathLabelClient{},
+			uriLocker:      &racyMockLocker{},
+			err:            false,
+			locked:         false,
+			lockedOutput:   "false",
+			unlockedOutput: "false",
+		},
+		{
+			eventFilename:  "testdata/pull_request.labeled.json",
+			eventName:      "pull_request",
+			label:          "staging",
+			issuesClient:   &happyPathLabelClient{},
+			uriLocker:      &racyMockLocker{},
+			err:            false,
+			locked:         true,
+			lockedOutput:   "true",
+			unlockedOutput: "false",
+		},
+		{
+			eventFilename:  "testdata/pull_request.labeled.json",
+			eventName:      "pull_request",
+			label:          "staging",
+			issuesClient:   &happyPathLabelClient{},
+			uriLocker:      URILockerOne,
+			err:            false,
+			locked:         true,
+			lockedOutput:   "true",
+			unlockedOutput: "false",
+		},
+		{
+			eventFilename:  "testdata/pull_request.closed.json",
+			eventName:      "pull_request",
+			label:          "staging",
+			issuesClient:   &happyPathLabelClient{},
+			uriLocker:      URILockerOne,
+			err:            false,
+			locked:         false,
+			lockedOutput:   "false",
+			unlockedOutput: "true",
+		},
+		{
+			eventFilename:  "testdata/pull_request.labeled.json",
+			eventName:      "pull_request",
+			label:          "staging",
+			issuesClient:   &happyPathLabelClient{},
+			uriLocker:      URILockerTwo,
+			err:            false,
+			locked:         true,
+			lockedOutput:   "true",
+			unlockedOutput: "false",
+		},
+		{
+			eventFilename:  "testdata/pull_request.unlabeled.json",
+			eventName:      "pull_request",
+			label:          "staging",
+			issuesClient:   &happyPathLabelClient{},
+			uriLocker:      URILockerTwo,
+			err:            false,
+			locked:         false,
+			lockedOutput:   "false",
+			unlockedOutput: "true",
+		},
+	}
 }
 
 func TestTable(t *testing.T) {
@@ -133,7 +180,10 @@ func TestTable(t *testing.T) {
 			}
 			output := lm.output()
 			if output["locked"] != tt.lockedOutput {
-				t.Errorf("%s: output: got %v, want %v", tt.eventFilename, lm.locked, tt.locked)
+				t.Errorf("%s: outputs.locked: got %v, want %v", tt.eventFilename, output["locked"], tt.lockedOutput)
+			}
+			if output["unlocked"] != tt.unlockedOutput {
+				t.Errorf("%s: outputs.unlocked: got %v, want %v", tt.eventFilename, output["unlocked"], tt.unlockedOutput)
 			}
 		})
 	}

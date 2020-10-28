@@ -20,6 +20,9 @@ inputs:
     description: The name of the column
     required: false
     default: label
+outputs:
+  locked:
+    description: 'true' if the lock was obtained. 'false' otherwise.
 runs:
   using: docker
   image: Dockerfile

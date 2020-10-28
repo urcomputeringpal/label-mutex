@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
 
 	"github.com/google/go-github/v32/github"
 	"github.com/hashicorp/go-multierror"
@@ -37,6 +38,7 @@ type LabelMutex struct {
 	action             string
 	pr                 *github.PullRequest
 	locked             bool
+	unlocked           bool
 	lockOwner          string
 }
 
@@ -46,6 +48,11 @@ func (lm *LabelMutex) output() map[string]string {
 		output["locked"] = "true"
 	} else {
 		output["locked"] = "false"
+	}
+	if lm.unlocked {
+		output["unlocked"] = "true"
+	} else {
+		output["unlocked"] = "false"
 	}
 	return output
 }
@@ -70,19 +77,34 @@ func (lm *LabelMutex) process() error {
 			hasLockConfirmedLabel = true
 		}
 	}
+
+	var removedLabelName string
+	var lockLabelRemoved bool
+	if lm.action == "unlabeled" {
+		removedLabelName = pr.GetLabel().GetName()
+		if removedLabelName == lm.label {
+			lockLabelRemoved = true
+		}
+	}
+
 	lockValue := lm.pr.GetHTMLURL()
-	if lm.pr.GetState() != "open" {
+	if lm.pr.GetState() != "open" || lockLabelRemoved {
 		err = lm.uriLocker.Unlock(lockValue)
 		if err == nil {
 			lm.locked = false
+			lm.unlocked = true
 		}
 		resultErr = multierror.Append(resultErr, err)
 
-		_, err = lm.issuesClient.RemoveLabelForIssue(lm.context, lm.pr.GetBase().Repo.Owner.GetLogin(), lm.pr.GetBase().Repo.GetName(), lm.pr.GetNumber(), lm.label)
-		resultErr = multierror.Append(resultErr, err)
+		resp, err := lm.issuesClient.RemoveLabelForIssue(lm.context, lm.pr.GetBase().Repo.Owner.GetLogin(), lm.pr.GetBase().Repo.GetName(), lm.pr.GetNumber(), lm.label)
+		if resp.Response.StatusCode != http.StatusNotFound && err != nil {
+			resultErr = multierror.Append(resultErr, err)
+		}
 
-		_, err = lm.issuesClient.RemoveLabelForIssue(lm.context, lm.pr.GetBase().Repo.Owner.GetLogin(), lm.pr.GetBase().Repo.GetName(), lm.pr.GetNumber(), fmt.Sprintf("%s:%s", lm.label, lockedSuffix))
-		resultErr = multierror.Append(resultErr, err)
+		resp, err = lm.issuesClient.RemoveLabelForIssue(lm.context, lm.pr.GetBase().Repo.Owner.GetLogin(), lm.pr.GetBase().Repo.GetName(), lm.pr.GetNumber(), fmt.Sprintf("%s:%s", lm.label, lockedSuffix))
+		if resp.Response.StatusCode != http.StatusNotFound && err != nil {
+			resultErr = multierror.Append(resultErr, err)
+		}
 
 		return resultErr.ErrorOrNil()
 	}
