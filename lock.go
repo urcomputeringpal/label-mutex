@@ -68,7 +68,11 @@ func (ll *uriLocker) Lock(uri string) (bool, string, error) {
 			log.Printf("Error reading current lock value too. %+v\n", resultErr.ErrorOrNil())
 			return false, "", resultErr.ErrorOrNil()
 		}
-		log.Printf("Current lock value found, still returning an error tho. %+v\n", resultErr.ErrorOrNil())
+		if string(value.BytesValue()) == uri {
+			log.Printf("Lock confirmed: %+v, %+v, %+v", success, value, resultErr.ErrorOrNil())
+			return true, uri, nil
+		}
+		log.Printf("Lock value mismatch found. %+v\n", resultErr.ErrorOrNil())
 		return false, string(value.BytesValue()), resultErr.ErrorOrNil()
 	}
 	log.Printf("Lock obtained: %+v, %+v, %+v", success, value, resultErr.ErrorOrNil())

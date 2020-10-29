@@ -101,6 +101,7 @@ func init() {
 			lockedOutput:   "true",
 			unlockedOutput: "false",
 		},
+		// add the label and obtain the lock
 		{
 			eventFilename:  "testdata/pull_request.labeled.json",
 			eventName:      "pull_request",
@@ -112,6 +113,19 @@ func init() {
 			lockedOutput:   "true",
 			unlockedOutput: "false",
 		},
+		// add the label again
+		{
+			eventFilename:  "testdata/pull_request.labeled.json",
+			eventName:      "pull_request",
+			label:          "staging",
+			issuesClient:   &happyPathLabelClient{},
+			uriLocker:      URILockerOne,
+			err:            false,
+			locked:         true,
+			lockedOutput:   "true",
+			unlockedOutput: "false",
+		},
+		// close to remove the first lock
 		{
 			eventFilename:  "testdata/pull_request.closed.json",
 			eventName:      "pull_request",
