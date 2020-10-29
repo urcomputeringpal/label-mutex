@@ -58,7 +58,7 @@ func NewDynamoURILocker(table string, partition string, name string) (URILocker,
 func (ll *uriLocker) Lock(uri string) (bool, string, error) {
 	log.Printf("Attempting to lock %s with value of %s ...\n", ll.name, uri)
 	var resultErr *multierror.Error
-	success, value, putErr := ll.dynalock.AtomicPut(ll.name, dynalock.WriteWithBytes([]byte(uri)))
+	success, value, putErr := ll.dynalock.AtomicPut(ll.name, dynalock.WriteWithNoExpires(), dynalock.WriteWithBytes([]byte(uri)))
 	if putErr != nil {
 		resultErr = multierror.Append(resultErr, putErr)
 		log.Printf("Error obtaining lock, tryna figure out what the current value is. %+v\n", resultErr.ErrorOrNil())
