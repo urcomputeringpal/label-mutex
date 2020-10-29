@@ -42,7 +42,9 @@ func NewDynamoURILocker(table string, partition string, name string) (URILocker,
 			Region:   aws.String(os.Getenv("AWS_DEFAULT_REGION")),
 		}), table, partition)
 	} else {
-		d = dynalock.New(dynamodb.New(sess), table, partition)
+		d = dynalock.New(dynamodb.New(sess, &aws.Config{
+			Region: aws.String(os.Getenv("AWS_DEFAULT_REGION")),
+		}), table, partition)
 	}
 
 	ll := &uriLocker{
