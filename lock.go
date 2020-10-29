@@ -71,7 +71,7 @@ func (ll *uriLocker) Lock(uri string) (bool, string, error) {
 		log.Printf("Current lock value found, still returning an error tho. %+v\n", resultErr.ErrorOrNil())
 		return false, string(value.BytesValue()), resultErr.ErrorOrNil()
 	}
-	log.Printf("Lock obtained: %+v, %+v, %+v", success, string(value.BytesValue()), resultErr.ErrorOrNil())
+	log.Printf("Lock obtained: %+v, %+v, %+v", success, value, resultErr.ErrorOrNil())
 	return success, uri, resultErr.ErrorOrNil()
 }
 
