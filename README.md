@@ -102,6 +102,7 @@ Ensure your AWS user has the following permissions on the above table:
 dynamodb:GetItem
 dynamodb:PutItem
 dynamodb:DeleteItem
+dynamodb:UpdateItem
 ```
 
 ## Acknowledgements
