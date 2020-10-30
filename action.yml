@@ -27,5 +27,5 @@ outputs:
     description: "'true' if the lock was obtained. 'false' otherwise."
 runs:
   using: docker
-  image: Dockerfile
-  # image: 'docker://urcomputeringpal/label-mutex:v0.0.1'
+  # image: Dockerfile
+  image: 'docker://urcomputeringpal/label-mutex:v0.0.1'
