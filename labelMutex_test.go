@@ -43,12 +43,12 @@ func (l *racyMockLocker) Lock(v string) (bool, string, error) {
 	return false, l.value, errors.New("lock already held")
 }
 
-func (l *racyMockLocker) Unlock(v string) error {
+func (l *racyMockLocker) Unlock(v string) (string, error) {
 	if l.value == v {
 		l.value = ""
-		return nil
+		return "", nil
 	}
-	return fmt.Errorf("Couldn't unlock with provided value of %s, lock currently held by %s", v, l.value)
+	return l.value, fmt.Errorf("Couldn't unlock with provided value of %s, lock currently held by %s", v, l.value)
 }
 
 func uuidLocker() URILocker {
@@ -69,6 +69,7 @@ type labelMutexTest struct {
 	locked         bool
 	lockedOutput   string
 	unlockedOutput string
+	existingOutput string
 }
 
 var URILockerOne URILocker
@@ -80,7 +81,7 @@ func init() {
 	URILockerTwo = uuidLocker()
 	tests = []labelMutexTest{
 		{
-			eventFilename:  "testdata/pull_request.synchronize.json",
+			eventFilename:  "testdata/1/pull_request.synchronize.json",
 			eventName:      "pull_request",
 			label:          "staging",
 			issuesClient:   &happyPathLabelClient{},
@@ -89,9 +90,10 @@ func init() {
 			locked:         false,
 			lockedOutput:   "false",
 			unlockedOutput: "false",
+			existingOutput: "",
 		},
 		{
-			eventFilename:  "testdata/pull_request.labeled.json",
+			eventFilename:  "testdata/1/pull_request.labeled.json",
 			eventName:      "pull_request",
 			label:          "staging",
 			issuesClient:   &happyPathLabelClient{},
@@ -100,10 +102,11 @@ func init() {
 			locked:         true,
 			lockedOutput:   "true",
 			unlockedOutput: "false",
+			existingOutput: "",
 		},
 		// add the label and obtain the lock
 		{
-			eventFilename:  "testdata/pull_request.labeled.json",
+			eventFilename:  "testdata/1/pull_request.labeled.json",
 			eventName:      "pull_request",
 			label:          "staging",
 			issuesClient:   &happyPathLabelClient{},
@@ -112,10 +115,11 @@ func init() {
 			locked:         true,
 			lockedOutput:   "true",
 			unlockedOutput: "false",
+			existingOutput: "",
 		},
 		// add the label again
 		{
-			eventFilename:  "testdata/pull_request.labeled.json",
+			eventFilename:  "testdata/1/pull_request.labeled.json",
 			eventName:      "pull_request",
 			label:          "staging",
 			issuesClient:   &happyPathLabelClient{},
@@ -124,10 +128,37 @@ func init() {
 			locked:         true,
 			lockedOutput:   "true",
 			unlockedOutput: "false",
+			existingOutput: "",
+		},
+		// try to clobber it
+		{
+			eventFilename:  "testdata/2/pull_request.labeled.json",
+			eventName:      "pull_request",
+			label:          "staging",
+			issuesClient:   &happyPathLabelClient{},
+			uriLocker:      URILockerOne,
+			err:            false,
+			locked:         false,
+			lockedOutput:   "false",
+			unlockedOutput: "false",
+			existingOutput: "https://github.com/urcomputeringpal/label-mutex/pull/1",
+		},
+		// try to remove it from a PR that doesn't have it
+		{
+			eventFilename:  "testdata/2/pull_request.unlabeled.json",
+			eventName:      "pull_request",
+			label:          "staging",
+			issuesClient:   &happyPathLabelClient{},
+			uriLocker:      URILockerOne,
+			err:            false,
+			locked:         false,
+			lockedOutput:   "false",
+			unlockedOutput: "false",
+			existingOutput: "https://github.com/urcomputeringpal/label-mutex/pull/1",
 		},
 		// close to remove the first lock
 		{
-			eventFilename:  "testdata/pull_request.closed.json",
+			eventFilename:  "testdata/1/pull_request.closed.json",
 			eventName:      "pull_request",
 			label:          "staging",
 			issuesClient:   &happyPathLabelClient{},
@@ -136,9 +167,10 @@ func init() {
 			locked:         false,
 			lockedOutput:   "false",
 			unlockedOutput: "true",
+			existingOutput: "",
 		},
 		{
-			eventFilename:  "testdata/pull_request.labeled.json",
+			eventFilename:  "testdata/1/pull_request.labeled.json",
 			eventName:      "pull_request",
 			label:          "staging",
 			issuesClient:   &happyPathLabelClient{},
@@ -147,9 +179,10 @@ func init() {
 			locked:         true,
 			lockedOutput:   "true",
 			unlockedOutput: "false",
+			existingOutput: "",
 		},
 		{
-			eventFilename:  "testdata/pull_request.unlabeled.json",
+			eventFilename:  "testdata/1/pull_request.unlabeled.json",
 			eventName:      "pull_request",
 			label:          "staging",
 			issuesClient:   &happyPathLabelClient{},
@@ -158,6 +191,7 @@ func init() {
 			locked:         false,
 			lockedOutput:   "false",
 			unlockedOutput: "true",
+			existingOutput: "",
 		},
 	}
 }
@@ -198,6 +232,9 @@ func TestTable(t *testing.T) {
 			}
 			if output["unlocked"] != tt.unlockedOutput {
 				t.Errorf("%s: outputs.unlocked: got %v, want %v", tt.eventFilename, output["unlocked"], tt.unlockedOutput)
+			}
+			if output["existing"] != tt.existingOutput {
+				t.Errorf("%s: outputs.existing: got %v, want %v", tt.eventFilename, output["existing"], tt.existingOutput)
 			}
 		})
 	}

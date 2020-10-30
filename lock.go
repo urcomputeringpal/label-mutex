@@ -23,7 +23,7 @@ type URILocker interface {
 	Lock(string) (bool, string, error)
 
 	// Unlock will clear the lock so that someone else may obtain it. An error will be returned if the value has changed.
-	Unlock(string) error
+	Unlock(string) (string, error)
 }
 
 // NewDynamoURILocker initializes a URILocker
@@ -73,22 +73,22 @@ func (ll *uriLocker) Lock(uri string) (bool, string, error) {
 			return true, uri, nil
 		}
 		log.Printf("Lock value mismatch found. %+v\n", resultErr.ErrorOrNil())
-		return false, string(value.BytesValue()), resultErr.ErrorOrNil()
+		return false, string(value.BytesValue()), nil
 	}
 	log.Printf("Lock obtained: %+v, %+v, %+v", success, value, resultErr.ErrorOrNil())
 	return success, uri, resultErr.ErrorOrNil()
 }
 
-func (ll *uriLocker) Unlock(uri string) error {
+func (ll *uriLocker) Unlock(uri string) (string, error) {
 	log.Printf("Attempting to unlock %s with value of %s ...\n", ll.name, uri)
 	value, getErr := ll.dynalock.Get(ll.name)
 	if getErr != nil {
-		return getErr
+		return "", getErr
 	}
 	currentLockHolder := string(value.BytesValue())
 	if currentLockHolder != uri {
-		return fmt.Errorf("Couldn't unlock with provided value of %s, lock currently held by %s", uri, currentLockHolder)
+		return currentLockHolder, fmt.Errorf("Couldn't unlock with provided value of %s, lock currently held by %s", uri, currentLockHolder)
 	}
 	_, err := ll.dynalock.AtomicDelete(ll.name, value)
-	return err
+	return "", err
 }

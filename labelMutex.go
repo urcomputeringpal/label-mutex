@@ -10,7 +10,6 @@ import (
 
 	"github.com/google/go-github/v32/github"
 	"github.com/hashicorp/go-multierror"
-	"github.com/sethvargo/go-githubactions"
 )
 
 var (
@@ -54,6 +53,9 @@ func (lm *LabelMutex) output() map[string]string {
 	} else {
 		output["unlocked"] = "false"
 	}
+	if lm.lockOwner != "" {
+		output["existing"] = lm.lockOwner
+	}
 	return output
 }
 
@@ -89,12 +91,19 @@ func (lm *LabelMutex) process() error {
 
 	lockValue := lm.pr.GetHTMLURL()
 	if lm.pr.GetState() != "open" || lockLabelRemoved {
-		err = lm.uriLocker.Unlock(lockValue)
-		if err == nil {
+		log.Printf("Unlocking '%s' ...\n", lm.label)
+		existing, err := lm.uriLocker.Unlock(lockValue)
+		if err == nil || existing == "" {
+			log.Println("Unlocked!")
 			lm.locked = false
 			lm.unlocked = true
 		}
-		resultErr = multierror.Append(resultErr, err)
+		if existing == "" {
+			resultErr = multierror.Append(resultErr, err)
+		} else {
+			log.Printf("Lock '%s' currently owned by %s  ...\n", lm.label, existing)
+			lm.lockOwner = existing
+		}
 
 		resp, err := lm.issuesClient.RemoveLabelForIssue(lm.context, lm.pr.GetBase().Repo.Owner.GetLogin(), lm.pr.GetBase().Repo.GetName(), lm.pr.GetNumber(), lm.label)
 		if resp.Response.StatusCode != http.StatusNotFound && err != nil {
@@ -116,7 +125,7 @@ func (lm *LabelMutex) process() error {
 		success, existingValue, lockErr := lm.uriLocker.Lock(lockValue)
 		if success {
 			lm.locked = true
-			githubactions.Warningf("weird, the lock should have already been ours!")
+			log.Printf("Weird, the lock should have already been ours!")
 			return nil
 		}
 		if existingValue == lockValue {
