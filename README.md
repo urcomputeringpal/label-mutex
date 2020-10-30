@@ -1,7 +1,5 @@
 # label-mutex
 
-> :warning: This is untested software. YMMV
-
 A GitHub Action that facilitates obtaining and releasing a lock on a shared resource with PR labels. Add a label to obtain the lock, remove it or close/merge the PR to release the lock.
 
 Let's say you'd like to allow engineers to deploy PRs to staging by adding a `staging` label to their PRs, but want to ensure that only one PR can be deployed to staging at a time. This action can be used to ensure that only one PR has a `staging` label at the same time like so:
@@ -34,9 +32,10 @@ on:
       - name: fail-if-not-locked
         env:
           LOCKED: ${{ steps.label-mutex.outputs.locked }}
+          EXISTING: ${{ steps.label-mutex.outputs.existing }}
         run: |
           if [ "$LOCKED" != "true" ]; then
-            echo "::warning ::Couldn't obtain a lock on staging. Someone may already be using it: https://github.com/$GITHUB_REPOSITORY/deployments"
+            echo "::warning ::Couldn't obtain a lock on staging. Someone may already be using it: $EXISTING"
             exit 1
           fi
 ```
