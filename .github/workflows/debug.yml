@@ -22,11 +22,17 @@ jobs:
       - run: |
           ./hack/create-local-table.sh http://localhost:8000
       - name: test
+        id: label-mutex
         uses: ./
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           label: test
           lock: test
+      - name: log
+        env:
+          OUTPUT: ${{ toJson(steps.label-mutex.outputs) }}
+        run: |
+          echo "$OUTPUT"
   # debug:
   #   runs-on: ubuntu-latest
   #   steps:
