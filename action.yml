@@ -30,4 +30,4 @@ outputs:
 runs:
   using: docker
   # image: Dockerfile
-  image: 'docker://urcomputeringpal/label-mutex:v0.2.0'
+  image: 'docker://urcomputeringpal/label-mutex:v0.3.0'
