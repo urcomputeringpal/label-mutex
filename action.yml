@@ -1,4 +1,5 @@
 name: label-mutex
+description: A GitHub Action that facilitates obtaining, releasing, and representing a lock on a shared resource using PR labels.
 branding:
   icon: bookmark
   color: gray-dark
