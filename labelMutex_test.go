@@ -84,6 +84,19 @@ func init() {
 	URILockerOne = uuidLocker()
 	URILockerTwo = uuidLocker()
 	tests = []labelMutexTest{
+		// try to read it
+		{
+			eventFilename:  "testdata/push.json",
+			eventName:      "push",
+			label:          "staging",
+			issuesClient:   &happyPathLabelClient{},
+			uriLocker:      URILockerOne,
+			err:            false,
+			locked:         false,
+			lockedOutput:   "false",
+			unlockedOutput: "true",
+			htmlURLOutput:  "",
+		},
 		{
 			eventFilename:  "testdata/1/pull_request.synchronize.json",
 			eventName:      "pull_request",
@@ -138,6 +151,19 @@ func init() {
 		{
 			eventFilename:  "testdata/2/pull_request.labeled.json",
 			eventName:      "pull_request",
+			label:          "staging",
+			issuesClient:   &happyPathLabelClient{},
+			uriLocker:      URILockerOne,
+			err:            false,
+			locked:         true,
+			lockedOutput:   "true",
+			unlockedOutput: "false",
+			htmlURLOutput:  "https://github.com/urcomputeringpal/label-mutex/pull/1",
+		},
+		// try to read it
+		{
+			eventFilename:  "testdata/push.json",
+			eventName:      "push",
 			label:          "staging",
 			issuesClient:   &happyPathLabelClient{},
 			uriLocker:      URILockerOne,
@@ -214,7 +240,7 @@ func TestTable(t *testing.T) {
 				issuesClient: tt.issuesClient,
 				uriLocker:    tt.uriLocker,
 				event:        event,
-				eventName:    "pull_request",
+				eventName:    tt.eventName,
 				label:        "staging",
 			}
 			err = lm.process()
