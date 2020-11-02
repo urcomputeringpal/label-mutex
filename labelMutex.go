@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/go-github/v32/github"
 	"github.com/hashicorp/go-multierror"
+	"github.com/wolfeidau/dynalock"
 )
 
 var (
@@ -76,17 +77,17 @@ func (lm *LabelMutex) processPush() error {
 		return err
 	}
 	value, err := lm.uriLocker.Read()
-	if err != nil {
-		return err
-	}
-	if value == "" {
+	if err == dynalock.ErrKeyNotFound {
 		lm.locked = false
 		lm.unlocked = true
+	}
+	if value == "" {
+		return errors.New("Empty value found")
 	} else {
+		lm.htmlURL = value
 		lm.locked = true
 		lm.unlocked = false
 	}
-	lm.htmlURL = value
 	return nil
 }
 
