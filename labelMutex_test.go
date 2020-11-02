@@ -69,7 +69,7 @@ type labelMutexTest struct {
 	locked         bool
 	lockedOutput   string
 	unlockedOutput string
-	existingOutput string
+	htmlUrlOutput  string
 }
 
 var URILockerOne URILocker
@@ -90,7 +90,7 @@ func init() {
 			locked:         false,
 			lockedOutput:   "false",
 			unlockedOutput: "false",
-			existingOutput: "",
+			htmlUrlOutput:  "",
 		},
 		{
 			eventFilename:  "testdata/1/pull_request.labeled.json",
@@ -102,7 +102,7 @@ func init() {
 			locked:         true,
 			lockedOutput:   "true",
 			unlockedOutput: "false",
-			existingOutput: "",
+			htmlUrlOutput:  "",
 		},
 		// add the label and obtain the lock
 		{
@@ -115,7 +115,7 @@ func init() {
 			locked:         true,
 			lockedOutput:   "true",
 			unlockedOutput: "false",
-			existingOutput: "",
+			htmlUrlOutput:  "",
 		},
 		// add the label again
 		{
@@ -128,7 +128,7 @@ func init() {
 			locked:         true,
 			lockedOutput:   "true",
 			unlockedOutput: "false",
-			existingOutput: "",
+			htmlUrlOutput:  "",
 		},
 		// try to clobber it
 		{
@@ -141,7 +141,7 @@ func init() {
 			locked:         false,
 			lockedOutput:   "false",
 			unlockedOutput: "false",
-			existingOutput: "https://github.com/urcomputeringpal/label-mutex/pull/1",
+			htmlUrlOutput:  "https://github.com/urcomputeringpal/label-mutex/pull/1",
 		},
 		// try to remove it from a PR that doesn't have it
 		{
@@ -154,7 +154,7 @@ func init() {
 			locked:         false,
 			lockedOutput:   "false",
 			unlockedOutput: "false",
-			existingOutput: "https://github.com/urcomputeringpal/label-mutex/pull/1",
+			htmlUrlOutput:  "https://github.com/urcomputeringpal/label-mutex/pull/1",
 		},
 		// close to remove the first lock
 		{
@@ -167,7 +167,7 @@ func init() {
 			locked:         false,
 			lockedOutput:   "false",
 			unlockedOutput: "true",
-			existingOutput: "",
+			htmlUrlOutput:  "",
 		},
 		{
 			eventFilename:  "testdata/1/pull_request.labeled.json",
@@ -179,7 +179,7 @@ func init() {
 			locked:         true,
 			lockedOutput:   "true",
 			unlockedOutput: "false",
-			existingOutput: "",
+			htmlUrlOutput:  "",
 		},
 		{
 			eventFilename:  "testdata/1/pull_request.unlabeled.json",
@@ -191,7 +191,7 @@ func init() {
 			locked:         false,
 			lockedOutput:   "false",
 			unlockedOutput: "true",
-			existingOutput: "",
+			htmlUrlOutput:  "",
 		},
 	}
 }
@@ -233,8 +233,8 @@ func TestTable(t *testing.T) {
 			if output["unlocked"] != tt.unlockedOutput {
 				t.Errorf("%s: outputs.unlocked: got %v, want %v", tt.eventFilename, output["unlocked"], tt.unlockedOutput)
 			}
-			if output["existing"] != tt.existingOutput {
-				t.Errorf("%s: outputs.existing: got %v, want %v", tt.eventFilename, output["existing"], tt.existingOutput)
+			if output["html_url"] != tt.htmlUrlOutput {
+				t.Errorf("%s: outputs.html_url: got %v, want %v", tt.eventFilename, output["html_url"], tt.htmlUrlOutput)
 			}
 		})
 	}

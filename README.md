@@ -32,10 +32,10 @@ on:
       - name: fail-if-not-locked
         env:
           LOCKED: ${{ steps.label-mutex.outputs.locked }}
-          EXISTING: ${{ steps.label-mutex.outputs.existing }}
+          URL: ${{ steps.label-mutex.outputs.html_url }}
         run: |
           if [ "$LOCKED" != "true" ]; then
-            echo "::warning ::Couldn't obtain a lock on staging. Someone may already be using it: $EXISTING"
+            echo "::warning ::Couldn't obtain a lock on staging. Someone may already be using it: $URL"
             exit 1
           fi
 ```

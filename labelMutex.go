@@ -54,7 +54,7 @@ func (lm *LabelMutex) output() map[string]string {
 		output["unlocked"] = "false"
 	}
 	if lm.lockOwner != "" {
-		output["existing"] = lm.lockOwner
+		output["html_url"] = lm.lockOwner
 	}
 	return output
 }
