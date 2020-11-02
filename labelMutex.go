@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -66,19 +65,10 @@ func (lm *LabelMutex) process() error {
 	if lm.eventName == "pull_request" {
 		return lm.processPR()
 	}
-	if lm.eventName == "push" {
-		return lm.processPush()
-	}
-	return fmt.Errorf("Unknown event %s", lm.eventName)
+	return lm.processOther()
 }
 
-func (lm *LabelMutex) processPush() error {
-	var push github.PushEvent
-	bytes := lm.clearJSONRepoOrgField(bytes.NewReader(lm.event))
-	err := json.Unmarshal(bytes, &push)
-	if err != nil {
-		return err
-	}
+func (lm *LabelMutex) processOther() error {
 	value, err := lm.uriLocker.Read()
 	if err == dynalock.ErrKeyNotFound {
 		lm.locked = false
