@@ -134,7 +134,7 @@ func (lm *LabelMutex) processPR() error {
 		} else {
 			lm.locked = true
 			lm.unlocked = false
-			log.Printf("Lock '%s' currently owned by %s  ...\n", lm.label, existing)
+			log.Printf("Lock '%s' currently claimed by %s  ...\n", lm.label, existing)
 			lm.htmlURL = existing
 		}
 
@@ -152,7 +152,7 @@ func (lm *LabelMutex) processPR() error {
 	}
 
 	if hasLockRequestLabel && hasLockConfirmedLabel {
-		log.Printf("Lock '%s' should already be owned by %s, confirming  ...\n", lm.label, lockValue)
+		log.Printf("Lock '%s' should already be claimed by %s, confirming  ...\n", lm.label, lockValue)
 
 		// double check
 		success, existingValue, lockErr := lm.uriLocker.Lock(lockValue)
@@ -185,7 +185,7 @@ func (lm *LabelMutex) processPR() error {
 			return nil
 		}
 		if existingValue != "" {
-			log.Printf("Lock '%s' already claimed by %s  ...\n", lm.label, existingValue)
+			log.Printf("Lock '%s' claimed by %s\n", lm.label, existingValue)
 			lm.locked = true
 			lm.htmlURL = existingValue
 			return nil
@@ -193,6 +193,6 @@ func (lm *LabelMutex) processPR() error {
 		return errors.New("Unknown error")
 	}
 
-	log.Printf("Label '%s' not present, doing nothing.\n", lm.label)
+	log.Printf("Label '%s' not present, doing nothing\n", lm.label)
 	return resultErr.ErrorOrNil()
 }

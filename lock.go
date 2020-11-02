@@ -61,10 +61,10 @@ func NewDynamoURILocker(table string, partition string, name string) (URILocker,
 func (ll *uriLocker) Lock(uri string) (bool, string, error) {
 	log.Printf("Attempting to lock %s with value of %s ...\n", ll.name, uri)
 	var resultErr *multierror.Error
-	success, value, putErr := ll.dynalock.AtomicPut(ll.name, dynalock.WriteWithNoExpires(), dynalock.WriteWithBytes([]byte(uri)))
-	if putErr != nil {
-		resultErr = multierror.Append(resultErr, putErr)
-		log.Printf("Error obtaining lock, tryna figure out what the current value is. %+v\n", resultErr.ErrorOrNil())
+	success, value, firstPutErr := ll.dynalock.AtomicPut(ll.name, dynalock.WriteWithNoExpires(), dynalock.WriteWithBytes([]byte(uri)))
+	if firstPutErr != nil {
+		resultErr = multierror.Append(resultErr, firstPutErr)
+		log.Printf("Couldn't obtain lock outright, trying figure out what the current value is. %+v\n", resultErr.ErrorOrNil())
 		value, getErr := ll.dynalock.Get(ll.name)
 		if getErr != nil {
 			resultErr = multierror.Append(resultErr, getErr)
@@ -72,8 +72,14 @@ func (ll *uriLocker) Lock(uri string) (bool, string, error) {
 			return false, "", resultErr.ErrorOrNil()
 		}
 		if string(value.BytesValue()) == uri {
-			log.Printf("Lock confirmed: %+v, %+v, %+v", success, value, resultErr.ErrorOrNil())
-			return true, uri, nil
+			success, value, putErr := ll.dynalock.AtomicPut(ll.name, dynalock.WriteWithNoExpires(), dynalock.WriteWithBytes([]byte(uri)), dynalock.WriteWithPreviousKV(value))
+			if putErr == nil {
+				log.Printf("Lock confirmed: %+v, %+v, %+v", success, value, resultErr.ErrorOrNil())
+				return false, uri, nil
+			}
+			resultErr = multierror.Append(resultErr, putErr)
+			log.Printf("Error confirming lock: %+v, %+v, %+v", success, value, resultErr.ErrorOrNil())
+			return false, "", resultErr.ErrorOrNil()
 		}
 		log.Printf("Lock value mismatch found. %+v\n", resultErr.ErrorOrNil())
 		return false, string(value.BytesValue()), nil
