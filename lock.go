@@ -24,6 +24,9 @@ type URILocker interface {
 
 	// Unlock will clear the lock so that someone else may obtain it. An error will be returned if the value has changed.
 	Unlock(string) (string, error)
+
+	// Read will return the value of the lock or an empty string.
+	Read() (string, error)
 }
 
 // NewDynamoURILocker initializes a URILocker
@@ -91,4 +94,12 @@ func (ll *uriLocker) Unlock(uri string) (string, error) {
 	}
 	_, err := ll.dynalock.AtomicDelete(ll.name, value)
 	return "", err
+}
+
+func (ll *uriLocker) Read() (string, error) {
+	value, getErr := ll.dynalock.Get(ll.name)
+	if getErr != nil {
+		return "", getErr
+	}
+	return string(value.BytesValue()), nil
 }

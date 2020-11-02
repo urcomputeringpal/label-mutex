@@ -51,6 +51,10 @@ func (l *racyMockLocker) Unlock(v string) (string, error) {
 	return l.value, fmt.Errorf("Couldn't unlock with provided value of %s, lock currently held by %s", v, l.value)
 }
 
+func (l *racyMockLocker) Read() (string, error) {
+	return l.value, nil
+}
+
 func uuidLocker() URILocker {
 	localDynamoLocker, err := NewDynamoURILocker("label-mutex", "staging", fmt.Sprintf("%v", uuid.New()))
 	if err != nil {
@@ -69,7 +73,7 @@ type labelMutexTest struct {
 	locked         bool
 	lockedOutput   string
 	unlockedOutput string
-	htmlUrlOutput  string
+	htmlURLOutput  string
 }
 
 var URILockerOne URILocker
@@ -90,7 +94,7 @@ func init() {
 			locked:         false,
 			lockedOutput:   "false",
 			unlockedOutput: "false",
-			htmlUrlOutput:  "",
+			htmlURLOutput:  "",
 		},
 		{
 			eventFilename:  "testdata/1/pull_request.labeled.json",
@@ -102,7 +106,7 @@ func init() {
 			locked:         true,
 			lockedOutput:   "true",
 			unlockedOutput: "false",
-			htmlUrlOutput:  "",
+			htmlURLOutput:  "https://github.com/urcomputeringpal/label-mutex/pull/1",
 		},
 		// add the label and obtain the lock
 		{
@@ -115,7 +119,7 @@ func init() {
 			locked:         true,
 			lockedOutput:   "true",
 			unlockedOutput: "false",
-			htmlUrlOutput:  "",
+			htmlURLOutput:  "https://github.com/urcomputeringpal/label-mutex/pull/1",
 		},
 		// add the label again
 		{
@@ -128,7 +132,7 @@ func init() {
 			locked:         true,
 			lockedOutput:   "true",
 			unlockedOutput: "false",
-			htmlUrlOutput:  "",
+			htmlURLOutput:  "https://github.com/urcomputeringpal/label-mutex/pull/1",
 		},
 		// try to clobber it
 		{
@@ -138,10 +142,10 @@ func init() {
 			issuesClient:   &happyPathLabelClient{},
 			uriLocker:      URILockerOne,
 			err:            false,
-			locked:         false,
-			lockedOutput:   "false",
+			locked:         true,
+			lockedOutput:   "true",
 			unlockedOutput: "false",
-			htmlUrlOutput:  "https://github.com/urcomputeringpal/label-mutex/pull/1",
+			htmlURLOutput:  "https://github.com/urcomputeringpal/label-mutex/pull/1",
 		},
 		// try to remove it from a PR that doesn't have it
 		{
@@ -151,10 +155,10 @@ func init() {
 			issuesClient:   &happyPathLabelClient{},
 			uriLocker:      URILockerOne,
 			err:            false,
-			locked:         false,
-			lockedOutput:   "false",
+			locked:         true,
+			lockedOutput:   "true",
 			unlockedOutput: "false",
-			htmlUrlOutput:  "https://github.com/urcomputeringpal/label-mutex/pull/1",
+			htmlURLOutput:  "https://github.com/urcomputeringpal/label-mutex/pull/1",
 		},
 		// close to remove the first lock
 		{
@@ -167,7 +171,7 @@ func init() {
 			locked:         false,
 			lockedOutput:   "false",
 			unlockedOutput: "true",
-			htmlUrlOutput:  "",
+			htmlURLOutput:  "",
 		},
 		{
 			eventFilename:  "testdata/1/pull_request.labeled.json",
@@ -179,7 +183,7 @@ func init() {
 			locked:         true,
 			lockedOutput:   "true",
 			unlockedOutput: "false",
-			htmlUrlOutput:  "",
+			htmlURLOutput:  "https://github.com/urcomputeringpal/label-mutex/pull/1",
 		},
 		{
 			eventFilename:  "testdata/1/pull_request.unlabeled.json",
@@ -191,7 +195,7 @@ func init() {
 			locked:         false,
 			lockedOutput:   "false",
 			unlockedOutput: "true",
-			htmlUrlOutput:  "",
+			htmlURLOutput:  "",
 		},
 	}
 }
@@ -233,8 +237,8 @@ func TestTable(t *testing.T) {
 			if output["unlocked"] != tt.unlockedOutput {
 				t.Errorf("%s: outputs.unlocked: got %v, want %v", tt.eventFilename, output["unlocked"], tt.unlockedOutput)
 			}
-			if output["html_url"] != tt.htmlUrlOutput {
-				t.Errorf("%s: outputs.html_url: got %v, want %v", tt.eventFilename, output["html_url"], tt.htmlUrlOutput)
+			if output["html_url"] != tt.htmlURLOutput {
+				t.Errorf("%s: outputs.html_url: got %v, want %v", tt.eventFilename, output["html_url"], tt.htmlURLOutput)
 			}
 		})
 	}
