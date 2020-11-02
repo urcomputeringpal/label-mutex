@@ -2,6 +2,7 @@ name: debug
 on:
   pull_request:
     types: [opened, synchronize, reopened, closed, labeled, unlabeled]
+  push:
 
 env:
   AWS_ACCESS_KEY_ID: "fake"
@@ -21,21 +22,27 @@ jobs:
       - run: |
           ./hack/create-local-table.sh http://localhost:8000
       - name: test
+        id: label-mutex
         uses: ./
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           label: test
           lock: test
-  # debug:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Dump GitHub Event
-  #       run: |
-  #           echo $GITHUB_EVENT_NAME.${{ github.event.action }}.json
-  #           echo
-  #           echo
-  #           echo
-  #           cat $GITHUB_EVENT_PATH
-  #           echo
-  #           echo
-  #           echo
+      - name: log
+        env:
+          OUTPUT: ${{ toJson(steps.label-mutex.outputs) }}
+        run: |
+          echo "$OUTPUT"
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump GitHub Event
+        run: |
+            echo $GITHUB_EVENT_NAME.${{ github.event.action }}.json
+            echo
+            echo
+            echo
+            cat $GITHUB_EVENT_PATH
+            echo
+            echo
+            echo

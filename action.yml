@@ -22,9 +22,11 @@ inputs:
     required: true
 outputs:
   locked:
-    description: "'true' if the lock was obtained. 'false' otherwise."
+    description: "'true' if the lock has been claimed. 'false' otherwise."
   unlocked:
-    description: "'true' if the lock was obtained. 'false' otherwise."
+    description: "'true' if the lock was confirmed to be free. 'false' otherwise."
+  html_url:
+    description: URL of the PR holding the lock
 runs:
   using: docker
   image: Dockerfile

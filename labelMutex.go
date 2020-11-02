@@ -1,15 +1,18 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 
 	"github.com/google/go-github/v32/github"
 	"github.com/hashicorp/go-multierror"
+	"github.com/wolfeidau/dynalock"
 )
 
 var (
@@ -38,7 +41,7 @@ type LabelMutex struct {
 	pr                 *github.PullRequest
 	locked             bool
 	unlocked           bool
-	lockOwner          string
+	htmlURL            string
 }
 
 func (lm *LabelMutex) output() map[string]string {
@@ -53,13 +56,64 @@ func (lm *LabelMutex) output() map[string]string {
 	} else {
 		output["unlocked"] = "false"
 	}
-	if lm.lockOwner != "" {
-		output["existing"] = lm.lockOwner
+	if lm.htmlURL != "" {
+		output["html_url"] = lm.htmlURL
 	}
 	return output
 }
 
 func (lm *LabelMutex) process() error {
+	if lm.eventName == "pull_request" {
+		return lm.processPR()
+	}
+	if lm.eventName == "push" {
+		return lm.processPush()
+	}
+	return fmt.Errorf("Unknown event %s", lm.eventName)
+}
+
+func (lm *LabelMutex) processPush() error {
+	var push github.PushEvent
+	bytes := lm.clearJSONRepoOrgField(bytes.NewReader(lm.event))
+	err := json.Unmarshal(bytes, &push)
+	if err != nil {
+		return err
+	}
+	value, err := lm.uriLocker.Read()
+	if err == dynalock.ErrKeyNotFound {
+		lm.locked = false
+		lm.unlocked = true
+	}
+	if value == "" {
+		lm.locked = false
+		lm.unlocked = true
+	} else {
+		lm.htmlURL = value
+		lm.locked = true
+		lm.unlocked = false
+	}
+	return nil
+}
+
+func (lm *LabelMutex) clearJSONRepoOrgField(reader io.Reader) []byte {
+	// workaround for https://github.com/google/go-github/issues/131
+	var o map[string]interface{}
+	dec := json.NewDecoder(reader)
+	dec.UseNumber()
+	dec.Decode(&o)
+	if o != nil {
+		repo := o["repository"]
+		if repo != nil {
+			if repo, ok := repo.(map[string]interface{}); ok {
+				delete(repo, "organization")
+			}
+		}
+	}
+	b, _ := json.MarshalIndent(o, "", "  ")
+	return b
+}
+
+func (lm *LabelMutex) processPR() error {
 	var resultErr *multierror.Error
 	var pr github.PullRequestEvent
 	err := json.Unmarshal(lm.event, &pr)
@@ -101,8 +155,10 @@ func (lm *LabelMutex) process() error {
 		if existing == "" {
 			resultErr = multierror.Append(resultErr, err)
 		} else {
-			log.Printf("Lock '%s' currently owned by %s  ...\n", lm.label, existing)
-			lm.lockOwner = existing
+			lm.locked = true
+			lm.unlocked = false
+			log.Printf("Lock '%s' currently claimed by %s  ...\n", lm.label, existing)
+			lm.htmlURL = existing
 		}
 
 		resp, err := lm.issuesClient.RemoveLabelForIssue(lm.context, lm.pr.GetBase().Repo.Owner.GetLogin(), lm.pr.GetBase().Repo.GetName(), lm.pr.GetNumber(), lm.label)
@@ -119,7 +175,7 @@ func (lm *LabelMutex) process() error {
 	}
 
 	if hasLockRequestLabel && hasLockConfirmedLabel {
-		log.Printf("Lock '%s' should already be owned by %s, confirming  ...\n", lm.label, lockValue)
+		log.Printf("Lock '%s' should already be claimed by %s, confirming  ...\n", lm.label, lockValue)
 
 		// double check
 		success, existingValue, lockErr := lm.uriLocker.Lock(lockValue)
@@ -143,6 +199,7 @@ func (lm *LabelMutex) process() error {
 		if success {
 			log.Printf("Lock '%s' obtained\n", lm.label)
 			lm.locked = true
+			lm.htmlURL = lockValue
 			labelsToAdd := []string{fmt.Sprintf("%s:%s", lm.label, lockedSuffix)}
 			_, _, err := lm.issuesClient.AddLabelsToIssue(lm.context, lm.pr.GetBase().Repo.Owner.GetLogin(), lm.pr.GetBase().Repo.GetName(), lm.pr.GetNumber(), labelsToAdd)
 			if err != nil {
@@ -151,13 +208,14 @@ func (lm *LabelMutex) process() error {
 			return nil
 		}
 		if existingValue != "" {
-			log.Printf("Lock '%s' already claimed by %s  ...\n", lm.label, existingValue)
-			lm.lockOwner = existingValue
+			log.Printf("Lock '%s' claimed by %s\n", lm.label, existingValue)
+			lm.locked = true
+			lm.htmlURL = existingValue
 			return nil
 		}
 		return errors.New("Unknown error")
 	}
 
-	log.Printf("Label '%s' not present, doing nothing.\n", lm.label)
+	log.Printf("Label '%s' not present, doing nothing\n", lm.label)
 	return resultErr.ErrorOrNil()
 }
