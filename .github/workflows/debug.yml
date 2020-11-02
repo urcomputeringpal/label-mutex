@@ -33,16 +33,16 @@ jobs:
           OUTPUT: ${{ toJson(steps.label-mutex.outputs) }}
         run: |
           echo "$OUTPUT"
-  # debug:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Dump GitHub Event
-  #       run: |
-  #           echo $GITHUB_EVENT_NAME.${{ github.event.action }}.json
-  #           echo
-  #           echo
-  #           echo
-  #           cat $GITHUB_EVENT_PATH
-  #           echo
-  #           echo
-  #           echo
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump GitHub Event
+        run: |
+            echo $GITHUB_EVENT_NAME.${{ github.event.action }}.json
+            echo
+            echo
+            echo
+            cat $GITHUB_EVENT_PATH
+            echo
+            echo
+            echo
