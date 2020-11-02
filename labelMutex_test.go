@@ -160,6 +160,19 @@ func init() {
 			unlockedOutput: "false",
 			htmlURLOutput:  "https://github.com/urcomputeringpal/label-mutex/pull/1",
 		},
+		// sync the pr
+		{
+			eventFilename:  "testdata/1/pull_request.synchronize_with_labels.json",
+			eventName:      "pull_request",
+			label:          "staging",
+			issuesClient:   &happyPathLabelClient{},
+			uriLocker:      URILockerOne,
+			err:            false,
+			locked:         true,
+			lockedOutput:   "true",
+			unlockedOutput: "false",
+			htmlURLOutput:  "https://github.com/urcomputeringpal/label-mutex/pull/1",
+		},
 		// try to read it
 		{
 			eventFilename:  "testdata/push.json",

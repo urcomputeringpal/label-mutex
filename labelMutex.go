@@ -181,11 +181,13 @@ func (lm *LabelMutex) processPR() error {
 		success, existingValue, lockErr := lm.uriLocker.Lock(lockValue)
 		if success {
 			lm.locked = true
+			lm.htmlURL = lockValue
 			log.Printf("Weird, the lock should have already been ours!")
 			return nil
 		}
 		if existingValue == lockValue {
 			lm.locked = true
+			lm.htmlURL = lockValue
 			return nil
 		}
 		return lockErr
