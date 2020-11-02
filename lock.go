@@ -24,6 +24,9 @@ type URILocker interface {
 
 	// Unlock will clear the lock so that someone else may obtain it. An error will be returned if the value has changed.
 	Unlock(string) (string, error)
+
+	// Read will return the value of the lock or an empty string.
+	Read() (string, error)
 }
 
 // NewDynamoURILocker initializes a URILocker
@@ -58,10 +61,10 @@ func NewDynamoURILocker(table string, partition string, name string) (URILocker,
 func (ll *uriLocker) Lock(uri string) (bool, string, error) {
 	log.Printf("Attempting to lock %s with value of %s ...\n", ll.name, uri)
 	var resultErr *multierror.Error
-	success, value, putErr := ll.dynalock.AtomicPut(ll.name, dynalock.WriteWithNoExpires(), dynalock.WriteWithBytes([]byte(uri)))
-	if putErr != nil {
-		resultErr = multierror.Append(resultErr, putErr)
-		log.Printf("Error obtaining lock, tryna figure out what the current value is. %+v\n", resultErr.ErrorOrNil())
+	success, value, firstPutErr := ll.dynalock.AtomicPut(ll.name, dynalock.WriteWithNoExpires(), dynalock.WriteWithBytes([]byte(uri)))
+	if firstPutErr != nil {
+		resultErr = multierror.Append(resultErr, firstPutErr)
+		log.Printf("Couldn't obtain lock outright, trying figure out what the current value is. %+v\n", resultErr.ErrorOrNil())
 		value, getErr := ll.dynalock.Get(ll.name)
 		if getErr != nil {
 			resultErr = multierror.Append(resultErr, getErr)
@@ -69,8 +72,14 @@ func (ll *uriLocker) Lock(uri string) (bool, string, error) {
 			return false, "", resultErr.ErrorOrNil()
 		}
 		if string(value.BytesValue()) == uri {
-			log.Printf("Lock confirmed: %+v, %+v, %+v", success, value, resultErr.ErrorOrNil())
-			return true, uri, nil
+			success, value, putErr := ll.dynalock.AtomicPut(ll.name, dynalock.WriteWithNoExpires(), dynalock.WriteWithBytes([]byte(uri)), dynalock.WriteWithPreviousKV(value))
+			if putErr == nil {
+				log.Printf("Lock confirmed: %+v, %+v, %+v", success, value, resultErr.ErrorOrNil())
+				return false, uri, nil
+			}
+			resultErr = multierror.Append(resultErr, putErr)
+			log.Printf("Error confirming lock: %+v, %+v, %+v", success, value, resultErr.ErrorOrNil())
+			return false, "", resultErr.ErrorOrNil()
 		}
 		log.Printf("Lock value mismatch found. %+v\n", resultErr.ErrorOrNil())
 		return false, string(value.BytesValue()), nil
@@ -91,4 +100,12 @@ func (ll *uriLocker) Unlock(uri string) (string, error) {
 	}
 	_, err := ll.dynalock.AtomicDelete(ll.name, value)
 	return "", err
+}
+
+func (ll *uriLocker) Read() (string, error) {
+	value, getErr := ll.dynalock.Get(ll.name)
+	if getErr != nil {
+		return "", getErr
+	}
+	return string(value.BytesValue()), nil
 }
