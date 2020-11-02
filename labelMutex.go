@@ -1,12 +1,10 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 
@@ -66,19 +64,10 @@ func (lm *LabelMutex) process() error {
 	if lm.eventName == "pull_request" {
 		return lm.processPR()
 	}
-	if lm.eventName == "push" {
-		return lm.processPush()
-	}
-	return fmt.Errorf("Unknown event %s", lm.eventName)
+	return lm.processOther()
 }
 
-func (lm *LabelMutex) processPush() error {
-	var push github.PushEvent
-	bytes := lm.clearJSONRepoOrgField(bytes.NewReader(lm.event))
-	err := json.Unmarshal(bytes, &push)
-	if err != nil {
-		return err
-	}
+func (lm *LabelMutex) processOther() error {
 	value, err := lm.uriLocker.Read()
 	if err == dynalock.ErrKeyNotFound {
 		lm.locked = false
@@ -93,24 +82,6 @@ func (lm *LabelMutex) processPush() error {
 		lm.unlocked = false
 	}
 	return nil
-}
-
-func (lm *LabelMutex) clearJSONRepoOrgField(reader io.Reader) []byte {
-	// workaround for https://github.com/google/go-github/issues/131
-	var o map[string]interface{}
-	dec := json.NewDecoder(reader)
-	dec.UseNumber()
-	dec.Decode(&o)
-	if o != nil {
-		repo := o["repository"]
-		if repo != nil {
-			if repo, ok := repo.(map[string]interface{}); ok {
-				delete(repo, "organization")
-			}
-		}
-	}
-	b, _ := json.MarshalIndent(o, "", "  ")
-	return b
 }
 
 func (lm *LabelMutex) processPR() error {
