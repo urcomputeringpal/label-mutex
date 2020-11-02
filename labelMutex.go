@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 
@@ -83,24 +82,6 @@ func (lm *LabelMutex) processOther() error {
 		lm.unlocked = false
 	}
 	return nil
-}
-
-func (lm *LabelMutex) clearJSONRepoOrgField(reader io.Reader) []byte {
-	// workaround for https://github.com/google/go-github/issues/131
-	var o map[string]interface{}
-	dec := json.NewDecoder(reader)
-	dec.UseNumber()
-	dec.Decode(&o)
-	if o != nil {
-		repo := o["repository"]
-		if repo != nil {
-			if repo, ok := repo.(map[string]interface{}); ok {
-				delete(repo, "organization")
-			}
-		}
-	}
-	b, _ := json.MarshalIndent(o, "", "  ")
-	return b
 }
 
 func (lm *LabelMutex) processPR() error {
