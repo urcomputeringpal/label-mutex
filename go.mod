@@ -3,7 +3,7 @@ module github.com/urcomputeringpal/label-mutex
 go 1.15
 
 require (
-	github.com/aws/aws-sdk-go v1.25.43
+	github.com/aws/aws-sdk-go v1.33.0
 	github.com/google/go-github/v32 v32.1.0
 	github.com/google/uuid v1.1.2
 	github.com/hashicorp/go-multierror v1.1.0
