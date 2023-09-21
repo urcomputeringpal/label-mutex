@@ -44,7 +44,9 @@ var (
 // ContextLocker provides an extension of the sync.Locker interface.
 type ContextLocker interface {
 	sync.Locker
+	LockWithValue(string)
 	ContextLock(context.Context) error
+	ContextLockWithValue(context.Context, string) error
 	ContextUnlock(context.Context) error
 }
 
@@ -56,14 +58,24 @@ type mutex struct {
 
 var _ ContextLocker = (*mutex)(nil)
 
+
 // Lock waits indefinitely to acquire a mutex.
 func (m *mutex) Lock() {
-	m.ContextLock(context.Background())
+	m.LockWithValue("1")
+}
+
+// Lock waits indefinitely to acquire a mutex.
+func (m *mutex) LockWithValue(value string) {
+	m.ContextLockWithValue(context.Background(), value)
+}
+
+func (m *mutex) ContextLock(ctx context.Context) error {
+	return m.ContextLockWithValue(ctx, "1")
 }
 
 // ContextLock waits indefinitely to acquire a mutex with timeout
 // governed by passed context.
-func (m *mutex) ContextLock(ctx context.Context) error {
+func (m *mutex) ContextLockWithValue(ctx context.Context, value string) error {
 	q := url.Values{
 		"name":              {m.object},
 		"uploadType":        {"media"},
@@ -74,7 +86,7 @@ func (m *mutex) ContextLock(ctx context.Context) error {
 	// an aggregate timeout and the latter is a per loop iteration delay.
 	backoff := 10 * time.Millisecond
 	for {
-		req, err := http.NewRequest("POST", url, bytes.NewReader([]byte("1")))
+		req, err := http.NewRequest("POST", url, bytes.NewReader([]byte(value)))
 		if err != nil {
 			// Likely malformed URL - retry won't fix so return.
 			return err
