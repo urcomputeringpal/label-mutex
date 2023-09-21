@@ -9,5 +9,6 @@ require (
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/sethvargo/go-githubactions v0.2.0
 	github.com/wolfeidau/dynalock v1.2.1
+	golang.org/x/net v0.0.0-20200202094626-16171245cfb2
 	golang.org/x/oauth2 v0.0.0-20180821212333-d2e6202438be
 )
