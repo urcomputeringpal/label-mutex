@@ -22,5 +22,11 @@
 		"golang.go",
 		"sleistner.vscode-fileutils"
     ],
-	"remoteUser": "vscode"
+	"remoteUser": "vscode",
+    "features": {
+        "ghcr.io/devcontainers/features/node:1": {
+            "version": "latest"
+	    }
+    },
+	"onCreateCommand": "./hack/create-local-table.sh && ./hack/create-local-bucket.sh"
 }

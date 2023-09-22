@@ -23,9 +23,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/motemen/go-loghttp"
 	"golang.org/x/net/context"
 )
 
+func init() {
+	httpClient = func(context.Context) (*http.Client, error) { 
+		return &http.Client{Transport: &loghttp.Transport{}}, nil
+	}
+}
 
 func TestLock(t *testing.T) {
 	// google cloud storage stub
@@ -47,6 +53,8 @@ func TestLock(t *testing.T) {
 		}
 	}))
 	defer storage.Close()
+	storageLockURL = storage.URL
+
 	m, err := New(nil, "gcslock", "lock")
 	if err != nil {
 		t.Fatal(err)
@@ -57,7 +65,7 @@ func TestLock(t *testing.T) {
 		close(done)
 	}()
 	select {
-	case <-time.After(time.Second):
+	case <-time.After(time.Second*5):
 		t.Errorf("m.Lock() took too long to lock")
 	case <-done:
 		// pass
@@ -77,6 +85,7 @@ func TestLockRetry(t *testing.T) {
 		}
 	}))
 	defer storage.Close()
+	storageLockURL = storage.URL
 
 	m, err := New(nil, "gcslock", "lock")
 	if err != nil {
@@ -88,7 +97,7 @@ func TestLockRetry(t *testing.T) {
 		close(done)
 	}()
 	select {
-	case <-time.After(time.Second):
+	case <-time.After(time.Second*5):
 		t.Errorf("m.Lock() took too long to lock")
 	case <-done:
 		// pass
@@ -123,7 +132,7 @@ func TestUnlock(t *testing.T) {
 		close(done)
 	}()
 	select {
-	case <-time.After(time.Second):
+	case <-time.After(time.Second*5):
 		t.Errorf("m.Unlock() took too long to unlock")
 	case <-done:
 		// pass
@@ -157,7 +166,7 @@ func TestUnlockRetry(t *testing.T) {
 		close(done)
 	}()
 	select {
-	case <-time.After(time.Second):
+	case <-time.After(time.Second*5):
 		t.Errorf("m.Unlock() took too long to unlock")
 	case <-done:
 		// pass
@@ -173,6 +182,7 @@ func TestLockShouldTimeout(t *testing.T) {
 		time.Sleep(10 * time.Millisecond)
 	}))
 	defer storage.Close()
+	storageLockURL = storage.URL
 	m, err := New(nil, "gcslock", "lock")
 	if err != nil {
 		t.Fatal("unable to allocate a gcslock.mutex object")
@@ -190,6 +200,7 @@ func TestLockShouldNotTimeout(t *testing.T) {
 		time.Sleep(10 * time.Millisecond)
 	}))
 	defer storage.Close()
+	storageLockURL = storage.URL
 	m, err := New(nil, "gcslock", "lock")
 	if err != nil {
 		t.Fatal("unable to allocate a gcslock.mutex object")

@@ -30,8 +30,8 @@ import (
 )
 
 const (
-	defaultStorageLockURL   = "https://www.googleapis.com/upload/storage/v1"
-	defaultStorageUnlockURL = "https://www.googleapis.com/storage/v1"
+	defaultStorageLockURL   = "https://storage.googleapis.com/upload/storage/v1"
+	defaultStorageUnlockURL = "https://storage.googleapis.com/storage/v1"
 )
 
 var (
