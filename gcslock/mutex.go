@@ -15,7 +15,7 @@
 
 // Package gcslock is a scalable, distributed mutex that can be used
 // to serialize computations anywhere on the global internet.
-package main
+package gcslock
 
 import (
 	"bytes"
@@ -57,7 +57,6 @@ type mutex struct {
 }
 
 var _ ContextLocker = (*mutex)(nil)
-
 
 // Lock waits indefinitely to acquire a mutex.
 func (m *mutex) Lock() {
@@ -158,7 +157,6 @@ var httpClient = func(ctx context.Context) (*http.Client, error) {
 // golang.org/x/oauth2/google package for App Default Credentials details.
 //
 // If ctx argument is nil, context.Background is used.
-//
 func New(ctx context.Context, bucket, object string) (ContextLocker, error) {
 	if ctx == nil {
 		ctx = context.Background()

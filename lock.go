@@ -11,4 +11,3 @@ type URILocker interface {
 	// Read will return the value of the lock or an empty string.
 	Read() (string, error)
 }
-

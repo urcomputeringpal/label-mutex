@@ -8,11 +8,15 @@ inputs:
     description: Github token to use to perform operations
     required: true
   table:
-    description: The name of the table that stores the lock
+    description: The name of the table that stores the lock. Required on AWS. Ignored on GCS.
+    required: false
+    default: label-mutex
+  bucket:
+    description: The name of the bucket that stores the lock. Turns on GCS support implicitly.
     required: false
     default: label-mutex
   partition:
-    description: A name for a logical grouping of locks.
+    description: A name for a logical grouping of locks. Only used on AWS.
     required: false
     default: label
   lock:
