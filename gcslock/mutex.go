@@ -157,7 +157,6 @@ var httpClient = func(ctx context.Context) (*http.Client, error) {
 // golang.org/x/oauth2/google package for App Default Credentials details.
 //
 // If ctx argument is nil, context.Background is used.
-//
 func New(ctx context.Context, bucket, object string) (ContextLocker, error) {
 	if ctx == nil {
 		ctx = context.Background()

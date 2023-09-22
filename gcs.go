@@ -29,7 +29,7 @@ func (c *customTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	return c.Transport.RoundTrip(req)
 }
 
-func NewGCSLocker(bucket string, name string) (*gcsLocker, err error) {
+func NewGCSLocker(bucket string, name string) (ll *gcsLocker, err error) {
 	var locker gcslock.ContextLocker
 
 	customEndpoint := os.Getenv("GCS_ENDPOINT_URL")
@@ -42,7 +42,7 @@ func NewGCSLocker(bucket string, name string) (*gcsLocker, err error) {
 			return nil, err
 		}
 	}
-	ll := &gcsLocker{
+	ll = &gcsLocker{
 		lock: locker,
 		name: name,
 	}
