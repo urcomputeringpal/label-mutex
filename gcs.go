@@ -12,8 +12,9 @@ import (
 )
 
 type gcsLocker struct {
-	lock gcslock.ContextLocker
-	name string
+	lock   gcslock.ContextLocker
+	client *http.Client
+	name   string
 }
 
 type customTransport struct {
@@ -31,20 +32,23 @@ func (c *customTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 
 func NewGCSLocker(bucket string, name string) (ll *gcsLocker, err error) {
 	var locker gcslock.ContextLocker
+	var client *http.Client
 
 	customEndpoint := os.Getenv("GCS_ENDPOINT_URL")
 	if customEndpoint != "" {
-
-		locker = gcslock.NewWithClient(&http.Client{Transport: &customTransport{Transport: &loghttp.Transport{}}}, bucket, name)
+		client = &http.Client{Transport: &customTransport{Transport: &loghttp.Transport{}}}
+		locker = gcslock.NewWithClient(client, bucket, name)
 	} else {
+		client = http.DefaultClient
 		locker, err = gcslock.New(context.Background(), bucket, name)
 		if err != nil {
 			return nil, err
 		}
 	}
 	ll = &gcsLocker{
-		lock: locker,
-		name: name,
+		lock:   locker,
+		client: client,
+		name:   name,
 	}
 	return ll, nil
 }
@@ -55,6 +59,7 @@ func (ll *gcsLocker) Lock(uri string) (bool, string, error) {
 }
 
 func (ll *gcsLocker) Unlock(uri string) (string, error) {
+	ll.lock.Unlock()
 	return "", errors.New("unimplemented")
 }
 

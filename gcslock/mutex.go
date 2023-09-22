@@ -48,6 +48,7 @@ type ContextLocker interface {
 	ContextLock(context.Context) error
 	ContextLockWithValue(context.Context, string) error
 	ContextUnlock(context.Context) error
+	ReadValue(context.Context, string, string) (string, error)
 }
 
 type mutex struct {
@@ -143,6 +144,31 @@ func (m *mutex) ContextUnlock(ctx context.Context) error {
 			return ctx.Err()
 		}
 	}
+}
+
+// TODO test
+func (m *mutex) ReadValue(ctx context.Context, bucket, object string) (string, error) {
+	url := fmt.Sprintf("%s/b/%s/o/%s?alt=media", storageUnlockURL, bucket, object)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		// Likely malformed URL - retry won't fix so return.
+		return "", err
+	}
+	req = req.WithContext(ctx)
+	res, err := m.client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer res.Body.Close()
+	if res.StatusCode == 404 {
+		return "", nil
+	}
+	if res.StatusCode != 200 {
+		return "", fmt.Errorf("unexpected status code %d", res.StatusCode)
+	}
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(res.Body)
+	return buf.String(), nil
 }
 
 // httpClient is overwritten in tests
