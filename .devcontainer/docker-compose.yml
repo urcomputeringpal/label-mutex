@@ -19,9 +19,26 @@ services:
       AWS_ACCESS_KEY_ID: "fake"
       AWS_SECRET_ACCESS_KEY: "fake"
       AWS_DEFAULT_REGION: us-east-1
-      AWS_PAGER: "" 
+      AWS_PAGER: ""
       AWS_DYNAMODB_ENDPOINT_URL: http://dynamodb:8000
+      GCS_ENDPOINT_URL: https://fake-gcs-server:4443
+      GCS_INSECURE_SKIP_VERIFY: "true"
   dynamodb:
     image: amazon/dynamodb-local
     ports:
       - 8000:8000
+  fake-gcs-server:
+    image: fsouza/fake-gcs-server:1.47
+    entrypoint: fake-gcs-server
+    command:
+      - "-host"
+      - "0.0.0.0"
+      - "-log-level"
+      - trace
+      - "-external-url"
+      - https://fake-gcs-server:4443
+      # only this backend supports versioning
+      - "-backend"
+      - memory
+    ports:
+      - 4443:4443

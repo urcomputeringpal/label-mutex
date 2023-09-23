@@ -48,7 +48,7 @@ func (l *racyMockLocker) Unlock(v string) (string, error) {
 		l.value = ""
 		return "", nil
 	}
-	return l.value, fmt.Errorf("Couldn't unlock with provided value of %s, lock currently held by %s", v, l.value)
+	return l.value, fmt.Errorf("couldn't unlock with provided value of %s, lock currently held by %s", v, l.value)
 }
 
 func (l *racyMockLocker) Read() (string, error) {
@@ -61,6 +61,14 @@ func uuidLocker() URILocker {
 		panic(err)
 	}
 	return localDynamoLocker
+}
+
+func gcsUUIDLocker() URILocker {
+	localGCSLocker, err := NewGCSLocker("label-mutex", fmt.Sprintf("%v", uuid.New()))
+	if err != nil {
+		panic(err)
+	}
+	return localGCSLocker
 }
 
 type labelMutexTest struct {
@@ -82,7 +90,7 @@ var tests []labelMutexTest
 
 func init() {
 	URILockerOne = uuidLocker()
-	URILockerTwo = uuidLocker()
+	URILockerTwo = gcsUUIDLocker()
 	tests = []labelMutexTest{
 		// try to read it
 		{
