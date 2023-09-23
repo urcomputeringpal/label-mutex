@@ -9,7 +9,7 @@ env:
   AWS_SECRET_ACCESS_KEY: "fake"
   AWS_DEFAULT_REGION: us-east-1
   AWS_DYNAMODB_ENDPOINT_URL: http://dynamodb:8000
-  GCS_ENDPOINT_URL: https://localhost:4443
+  GCS_ENDPOINT_URL: https://fake-gcs-server:4443
   GCS_INSECURE_SKIP_VERIFY: "true"
 jobs:
   dynamo:
@@ -20,13 +20,6 @@ jobs:
         image: amazon/dynamodb-local
         ports:
           - 8000:8000
-      fake-gcs-server:
-        image: ghcr.io/urcomputeringpal/label-mutex-fake-gcs-server:pr-12
-        credentials:
-          username: ${{ github.actor }}
-          password: ${{ secrets.github_token }}
-        ports:
-          - 4443:4443
     steps:
       - uses: actions/checkout@v4
       - run: |
