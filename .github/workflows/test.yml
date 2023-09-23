@@ -11,9 +11,8 @@ jobs:
   go-test:
     strategy:
       matrix:
-        include:
-          # renovate: datasource=golang-version
-          - go_version: 1.21.1
+        go-version:
+          - stable
     runs-on: ubuntu-latest
     services:
       dynamodb:
@@ -24,7 +23,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v4
         with:
-          go-version: ${{ matrix.go_version }}
+          go-version: ${{ matrix.go-version }}
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Create local table
