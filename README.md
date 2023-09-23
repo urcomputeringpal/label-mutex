@@ -15,9 +15,9 @@ on:
       - synchronize
       - reopened
 
-#jobs:
-#  deploy:
-#    steps:
+      #jobs:
+      #  deploy:
+      #    steps:
 
       - uses: urcomputeringpal/label-mutex@v0.3.0
         id: label-mutex
@@ -50,9 +50,9 @@ on:
       - closed
       - unlabeled
 
-#jobs:
-#  unlock:
-#    steps:
+      #jobs:
+      #  unlock:
+      #    steps:
 
       - uses: urcomputeringpal/label-mutex@v0.3.0
         id: label-mutex
@@ -68,7 +68,9 @@ on:
 
 ## Setup
 
-## Lock table
+### AWS
+
+#### Lock table
 
 ```hcl
 resource "aws_dynamodb_table" "label_mutex" {
@@ -94,7 +96,7 @@ resource "aws_dynamodb_table" "label_mutex" {
 }
 ```
 
-### IAM
+#### IAM
 
 Ensure your AWS user has the following permissions on the above table:
 
@@ -105,6 +107,13 @@ dynamodb:DeleteItem
 dynamodb:UpdateItem
 ```
 
+## GCS
+
+- Setup a new project at the [Google APIs Console](https://console.developers.google.com/) and enable the Cloud Storage API.
+- Install the [Google Cloud SDK tool](https://cloud.google.com/sdk/downloads) and configure your project and your OAuth credentials.
+- Create a bucket in which to store your lock file using the command `gsutil mb gs://your-bucket-name`.
+- Enable object versioning in your bucket using the command `gsutil versioning set on gs://your-bucket-name`.
+
 ## Acknowledgements
 
-* https://github.com/sethvargo/go-hello-githubactions
+- https://github.com/sethvargo/go-hello-githubactions
