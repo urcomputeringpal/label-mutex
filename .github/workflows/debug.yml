@@ -57,7 +57,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: |
-          ./hack/create-local-bucket.sh https://localhost:4443
+          ./hack/create-local-bucket.sh localhost
       - name: test
         id: label-mutex
         uses: ./

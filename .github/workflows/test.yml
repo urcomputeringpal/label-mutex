@@ -39,6 +39,6 @@ jobs:
       - name: Create local table
         run: ./hack/create-local-table.sh http://localhost:8000
       - name: Create local bucket
-        run: ./hack/create-local-bucket.sh https://localhost:4443
+        run: ./hack/create-local-bucket.sh localhost
       - name: Test
         run: go test -v ./...
