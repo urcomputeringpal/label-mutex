@@ -47,6 +47,6 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: |
-            type=gha
+            type=gha,scope=${{ matrix.image }}
           cache-to: |
-            mode=max,type=gha
+            mode=max,type=gha,scope=${{ matrix.image }}
