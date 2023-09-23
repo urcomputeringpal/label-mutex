@@ -9,8 +9,11 @@ env:
   AWS_SECRET_ACCESS_KEY: "fake"
   AWS_DEFAULT_REGION: us-east-1
   AWS_DYNAMODB_ENDPOINT_URL: http://dynamodb:8000
+  GCS_ENDPOINT_URL: https://fake-gcs-server:4443
+  GCS_INSECURE_SKIP_VERIFY: "true"
 jobs:
-  run-action:
+  dynamo:
+    name: Dynamo
     runs-on: ubuntu-latest
     services:
       dynamodb:
@@ -21,28 +24,81 @@ jobs:
       - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
       - run: |
           ./hack/create-local-table.sh http://localhost:8000
+        timeout-minutes: 1
       - name: test
         id: label-mutex
         uses: ./
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          label: test
-          lock: test
+          label: dynamo
+          lock: dynamo
       - name: log
         env:
           OUTPUT: ${{ toJson(steps.label-mutex.outputs) }}
         run: |
           echo "$OUTPUT"
-  debug:
+
+  gcs:
+    name: GCS
     runs-on: ubuntu-latest
+    services:
+      fake-gcs-server:
+        image: ghcr.io/urcomputeringpal/label-mutex-fake-gcs-server:pr-12
+        credentials:
+          username: ${{ github.actor }}
+          password: ${{ secrets.github_token }}
+        ports:
+          - 4443:4443
     steps:
+      - uses: actions/checkout@v4
+      - run: |
+          ./hack/create-local-bucket.sh localhost
+        timeout-minutes: 1
+      - name: test
+        id: label-mutex
+        uses: ./
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          label: gcs
+          lock: gcs
+          bucket: label-mutex
+      - name: log
+        env:
+          OUTPUT: ${{ toJson(steps.label-mutex.outputs) }}
+        run: |
+          echo "$OUTPUT"
+
+  debug:
+    name: Actions Event
+    runs-on: ubuntu-latest
+    services:
+      fake-gcs-server:
+        image: ghcr.io/urcomputeringpal/label-mutex-fake-gcs-server:pr-12
+        credentials:
+          username: ${{ github.actor }}
+          password: ${{ secrets.github_token }}
+        ports:
+          - 4443:4443
+    steps:
+      # - name: Tailscale
+      #   if: github.event_name == 'pull_request'
+      #   uses: tailscale/github-action@v2
+      #   with:
+      #     oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+      #     oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+      #     tags: tag:ci
+      #     args: --ssh
+      # - run: tailscale status; whoami
+      #   if: github.event_name == 'pull_request'
+      # - run: sleep 36000
+      #   if: github.event_name == 'pull_request'
       - name: Dump GitHub Event
         run: |
-            echo $GITHUB_EVENT_NAME.${{ github.event.action }}.json
-            echo
-            echo
-            echo
-            cat $GITHUB_EVENT_PATH
-            echo
-            echo
-            echo
+          echo $GITHUB_EVENT_NAME.${{ github.event.action }}.json
+          echo
+          echo
+          echo
+          cat $GITHUB_EVENT_PATH
+          echo
+          echo
+          echo
