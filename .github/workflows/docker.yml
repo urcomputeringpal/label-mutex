@@ -16,7 +16,6 @@ jobs:
       - id: meta
         uses: docker/metadata-action@v5
         with:
-        with:
           images: ${{ github.repository }}
 
       - uses: docker/login-action@v3
