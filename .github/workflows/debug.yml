@@ -86,18 +86,18 @@ jobs:
         ports:
           - 4443:4443
     steps:
-      - name: Tailscale
-        if: github.event_name == 'pull_request'
-        uses: tailscale/github-action@v2
-        with:
-          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
-          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
-          tags: tag:ci
-          args: --ssh
-      - run: tailscale status; whoami
-        if: github.event_name == 'pull_request'
-      - run: sleep 36000
-        if: github.event_name == 'pull_request'
+      # - name: Tailscale
+      #   if: github.event_name == 'pull_request'
+      #   uses: tailscale/github-action@v2
+      #   with:
+      #     oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+      #     oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+      #     tags: tag:ci
+      #     args: --ssh
+      # - run: tailscale status; whoami
+      #   if: github.event_name == 'pull_request'
+      # - run: sleep 36000
+      #   if: github.event_name == 'pull_request'
       - name: Dump GitHub Event
         run: |
           echo $GITHUB_EVENT_NAME.${{ github.event.action }}.json
