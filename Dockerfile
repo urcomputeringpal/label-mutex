@@ -1,4 +1,5 @@
 # Copyright 2020 Seth Vargo
+# Copyright 2023 Ur Computering Pal, LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,10 +14,13 @@
 # limitations under the License.
 
 # Specify the version of Go to use
-FROM golang:1.15 as builder
+FROM golang:1.21 as builder
+
+RUN apt-get update && apt-get install -y xz-utils && rm -rf /var/lib/apt/lists/*
 
 # Install upx (upx.github.io) to compress the compiled action
-RUN apt-get update && apt-get -y install upx
+RUN curl -L https://github.com/upx/upx/releases/download/v4.1.0/upx-4.1.0-amd64_linux.tar.xz | \
+    tar -xJv --strip-components=1
 
 # Turn on Go modules support and disable CGO
 ENV GO111MODULE=on CGO_ENABLED=0
@@ -40,7 +44,7 @@ RUN go build \
 RUN strip /bin/action
 
 # Compress the compiled action
-RUN upx -q -9 /bin/action
+RUN /go/upx -q -9 /bin/action
 
 
 # Step 2
