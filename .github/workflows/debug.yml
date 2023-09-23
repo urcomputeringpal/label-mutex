@@ -27,9 +27,10 @@ jobs:
         ports:
           - 4443:4443
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - run: |
           ./hack/create-local-table.sh http://localhost:8000
+        timeout-minutes: 1
       - name: test
         id: label-mutex
         uses: ./
@@ -55,9 +56,10 @@ jobs:
         ports:
           - 4443:4443
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - run: |
           ./hack/create-local-bucket.sh localhost
+        timeout-minutes: 1
       - name: test
         id: label-mutex
         uses: ./
@@ -76,6 +78,14 @@ jobs:
     name: Actions Event
     runs-on: ubuntu-latest
     steps:
+      - name: Tailscale
+        uses: tailscale/github-action@v2
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+          args: --ssh
+      - run: sleep 36000
       - name: Dump GitHub Event
         run: |
           echo $GITHUB_EVENT_NAME.${{ github.event.action }}.json
