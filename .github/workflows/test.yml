@@ -20,6 +20,14 @@ jobs:
         image: amazon/dynamodb-local
         ports:
           - 8000:8000
+      fake-gcs-server:
+        image: ghcr.io/urcomputeringpal/label-mutex-fake-gcs-server:pr-12
+        credentials:
+          username: ${{ github.actor }}
+          password: ${{ secrets.github_token }}
+        ports:
+          - 4443:4443
+
     steps:
       - name: Install Go
         uses: actions/setup-go@v4

@@ -17,6 +17,13 @@ jobs:
         image: amazon/dynamodb-local
         ports:
           - 8000:8000
+      fake-gcs-server:
+        image: ghcr.io/urcomputeringpal/label-mutex-fake-gcs-server:pr-12
+        credentials:
+          username: ${{ github.actor }}
+          password: ${{ secrets.github_token }}
+        ports:
+          - 4443:4443
     steps:
       - uses: actions/checkout@v2
       - run: |
@@ -38,11 +45,11 @@ jobs:
     steps:
       - name: Dump GitHub Event
         run: |
-            echo $GITHUB_EVENT_NAME.${{ github.event.action }}.json
-            echo
-            echo
-            echo
-            cat $GITHUB_EVENT_PATH
-            echo
-            echo
-            echo
+          echo $GITHUB_EVENT_NAME.${{ github.event.action }}.json
+          echo
+          echo
+          echo
+          cat $GITHUB_EVENT_PATH
+          echo
+          echo
+          echo
