@@ -18,6 +18,7 @@ func main() {
 		label:       githubactions.GetInput("label"),
 		table:       githubactions.GetInput("table"),
 		partition:   githubactions.GetInput("partition"),
+		bucket:      githubactions.GetInput("bucket"),
 		lock:        githubactions.GetInput("lock"),
 	}
 	err := c.Validate()
@@ -25,8 +26,14 @@ func main() {
 		githubactions.Fatalf("failed to validate input: %+v", err)
 	}
 
-	uriLocker, err := NewDynamoURILocker(c.table, c.partition, c.lock)
-	if err != nil {
+	var uriLocker URILocker
+	var initErr error
+	if c.bucket == "" {
+		uriLocker, initErr = NewDynamoURILocker(c.table, c.partition, c.lock)
+	} else {
+		uriLocker, initErr = NewGCSLocker(c.bucket, c.lock)
+	}
+	if initErr != nil {
 		githubactions.Fatalf("failed to initialize: %+v", err)
 	}
 
@@ -62,6 +69,7 @@ type config struct {
 	label       string
 	table       string
 	partition   string
+	bucket      string
 	lock        string
 }
 
@@ -73,8 +81,11 @@ func (c *config) Validate() error {
 	if c.label == "" {
 		resultErr = multierror.Append(resultErr, errors.New("input 'label' missing"))
 	}
-	if c.table == "" {
-		resultErr = multierror.Append(resultErr, errors.New("input 'table' missing"))
+	if c.table == "" && c.bucket == "" {
+		resultErr = multierror.Append(resultErr, errors.New("either 'table' or 'bucket' is required"))
+	}
+	if c.partition == "" {
+		c.partition = c.bucket
 	}
 	if c.partition == "" {
 		resultErr = multierror.Append(resultErr, errors.New("input 'partition' missing"))
