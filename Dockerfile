@@ -14,7 +14,7 @@
 # limitations under the License.
 
 # Specify the version of Go to use
-FROM golang:1.21 as builder
+FROM golang:1.21@sha256:c416ceeec1cdf037b80baef1ccb402c230ab83a9134b34c0902c542eb4539c82 as builder
 
 RUN apt-get update && apt-get install -y xz-utils && rm -rf /var/lib/apt/lists/*
 
