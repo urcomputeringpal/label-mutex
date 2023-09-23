@@ -1,7 +1,7 @@
 name: test
 on:
-  - push
-
+  pull_request:
+  merge_group:
 
 env:
   AWS_ACCESS_KEY_ID: "fake"
@@ -12,22 +12,22 @@ jobs:
   go-test:
     strategy:
       matrix:
-        go-version: [1.15.x]
-        os: [ubuntu-latest]
-    runs-on: ${{ matrix.os }}
+        go-version:
+          - stable
+    runs-on: ubuntu-latest
     services:
       dynamodb:
         image: amazon/dynamodb-local
         ports:
           - 8000:8000
     steps:
-    - name: Install Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: ${{ matrix.go-version }}
-    - name: Checkout code
-      uses: actions/checkout@v2
-    - name: Create local table
-      run: ./hack/create-local-table.sh http://localhost:8000
-    - name: Test
-      run: go test -v ./...
+      - name: Install Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ matrix.go-version }}
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Create local table
+        run: ./hack/create-local-table.sh http://localhost:8000
+      - name: Test
+        run: go test -v ./...
