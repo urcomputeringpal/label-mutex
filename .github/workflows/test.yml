@@ -8,7 +8,7 @@ env:
   AWS_SECRET_ACCESS_KEY: "fake"
   AWS_DEFAULT_REGION: us-east-1
   AWS_DYNAMODB_ENDPOINT_URL: http://localhost:8000
-  GCS_ENDPOINT_URL: https://fake-gcs-server:4443
+  GCS_ENDPOINT_URL: https://localhost:4443
 jobs:
   go-test:
     strategy:
@@ -39,6 +39,6 @@ jobs:
       - name: Create local table
         run: ./hack/create-local-table.sh http://localhost:8000
       - name: Create local bucket
-        run: ./hack/create-local-bucket.sh
+        run: ./hack/create-local-bucket.sh https://localhost:4443
       - name: Test
         run: go test -v ./...

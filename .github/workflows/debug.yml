@@ -9,7 +9,7 @@ env:
   AWS_SECRET_ACCESS_KEY: "fake"
   AWS_DEFAULT_REGION: us-east-1
   AWS_DYNAMODB_ENDPOINT_URL: http://dynamodb:8000
-  GCS_ENDPOINT_URL: https://fake-gcs-server:4443
+  GCS_ENDPOINT_URL: https://localhost:4443
 jobs:
   dynamo:
     name: Dynamo
@@ -57,7 +57,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: |
-          ./hack/create-local-bucket.sh
+          ./hack/create-local-bucket.sh https://localhost:4443
       - name: test
         id: label-mutex
         uses: ./
@@ -73,6 +73,7 @@ jobs:
           echo "$OUTPUT"
 
   debug:
+    name: Actions Event
     runs-on: ubuntu-latest
     steps:
       - name: Dump GitHub Event
