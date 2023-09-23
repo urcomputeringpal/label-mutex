@@ -1,32 +1,34 @@
 {
-	"dockerComposeFile": "docker-compose.yml",
-	"workspaceFolder": "/workspace",
-	"service": "app",
-	"settings": { 
-		"terminal.integrated.shell.linux": "/bin/bash",
-		"go.useGoProxyToCheckForToolUpdates": false,
-		"go.useLanguageServer": true,
-		"go.gopath": "/go",
-		"go.goroot": "/usr/local/go",
-		"go.toolsGopath": "/go/bin"
-	},
-    "extensions": [
-        "coenraads.bracket-pair-colorizer-2",
-        "eamodio.gitlens",
-        "github.vscode-pull-request-github",
-        "ms-azuretools.vscode-docker",
-        "ms-vsliveshare.vsliveshare",
-        "vscode-icons-team.vscode-icons",
-        "visualstudioexptteam.vscodeintellicode",
-		"ms-vscode.go",
-		"golang.go",
-		"sleistner.vscode-fileutils"
-    ],
-	"remoteUser": "vscode",
-    "features": {
-        "ghcr.io/devcontainers/features/node:1": {
-            "version": "latest"
-	    }
-    },
-	"onCreateCommand": "./hack/create-local-table.sh && ./hack/create-local-bucket.sh"
+  "dockerComposeFile": "docker-compose.yml",
+  "workspaceFolder": "/workspace",
+  "service": "app",
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/bash",
+    "go.useGoProxyToCheckForToolUpdates": false,
+    "go.useLanguageServer": true,
+    "go.gopath": "/go",
+    "go.goroot": "/usr/local/go",
+    "go.toolsGopath": "/go/bin"
+  },
+  "extensions": [
+    "coenraads.bracket-pair-colorizer-2",
+    "eamodio.gitlens",
+    "github.vscode-pull-request-github",
+    "ms-azuretools.vscode-docker",
+    "ms-vsliveshare.vsliveshare",
+    "vscode-icons-team.vscode-icons",
+    "visualstudioexptteam.vscodeintellicode",
+    "ms-vscode.go",
+    "golang.go",
+    "sleistner.vscode-fileutils",
+    "GitHub.copilot",
+    "esbenp.prettier-vscode"
+  ],
+  "remoteUser": "vscode",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "latest"
+    }
+  },
+  "onCreateCommand": "./hack/create-local-table.sh && ./hack/create-local-bucket.sh"
 }
