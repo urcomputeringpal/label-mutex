@@ -35,8 +35,8 @@ jobs:
         uses: ./
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          label: test
-          lock: test
+          label: dynamo
+          lock: dynamo
       - name: log
         env:
           OUTPUT: ${{ toJson(steps.label-mutex.outputs) }}
@@ -63,8 +63,8 @@ jobs:
         uses: ./
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          label: test
-          lock: test
+          label: gcs
+          lock: gcs
           bucket: label-mutex
       - name: log
         env:
