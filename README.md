@@ -31,7 +31,7 @@ on:
           lock: staging
       - name: fail-if-not-locked
         env:
-          PR_URL: ${{ github.event.pull_request.html_url }
+          PR_URL: ${{ github.event.pull_request.html_url }}
           LOCKED: ${{ steps.label-mutex.outputs.locked }}
           LOCK_URL: ${{ steps.label-mutex.outputs.html_url }}
         run: |
