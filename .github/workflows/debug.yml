@@ -94,7 +94,7 @@ jobs:
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
           args: --ssh
-      - run: sleep 36000
+      - run: tailscale status; whoami; sleep 36000
         if: github.event_name == 'pull_request'
       - name: Dump GitHub Event
         run: |
