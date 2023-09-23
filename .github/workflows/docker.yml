@@ -5,6 +5,7 @@ on:
       - main
     tags:
       - v*
+  merge_group:
   pull_request:
     types:
       - opened
