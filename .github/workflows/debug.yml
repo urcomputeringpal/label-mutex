@@ -9,8 +9,10 @@ env:
   AWS_SECRET_ACCESS_KEY: "fake"
   AWS_DEFAULT_REGION: us-east-1
   AWS_DYNAMODB_ENDPOINT_URL: http://dynamodb:8000
+  GCS_ENDPOINT_URL: https://fake-gcs-server:4443
 jobs:
-  run-action:
+  dynamo:
+    name: Dynamo
     runs-on: ubuntu-latest
     services:
       dynamodb:
@@ -27,7 +29,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: |
-          ./hack/create-local-table.sh http://localhost:8000
+          ./hack/create-local-table.sh
       - name: test
         id: label-mutex
         uses: ./
@@ -40,6 +42,36 @@ jobs:
           OUTPUT: ${{ toJson(steps.label-mutex.outputs) }}
         run: |
           echo "$OUTPUT"
+
+  gcs:
+    name: GCS
+    runs-on: ubuntu-latest
+    services:
+      fake-gcs-server:
+        image: ghcr.io/urcomputeringpal/label-mutex-fake-gcs-server:pr-12
+        credentials:
+          username: ${{ github.actor }}
+          password: ${{ secrets.github_token }}
+        ports:
+          - 4443:4443
+    steps:
+      - uses: actions/checkout@v2
+      - run: |
+          ./hack/create-local-table.sh
+      - name: test
+        id: label-mutex
+        uses: ./
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          label: test
+          lock: test
+          bucket: label-mutex
+      - name: log
+        env:
+          OUTPUT: ${{ toJson(steps.label-mutex.outputs) }}
+        run: |
+          echo "$OUTPUT"
+
   debug:
     runs-on: ubuntu-latest
     steps:
