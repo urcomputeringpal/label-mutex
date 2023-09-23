@@ -40,4 +40,4 @@ jobs:
           cache-from: |
             type=gha
           cache-to: |
-            mode=max,type=local,dest=/tmp/.buildx-cache
+            mode=max,type=gha
