@@ -23,7 +23,7 @@ jobs:
       - id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ github.repository }}
+          images: ghcr.io/${{ github.repository }}
 
       - uses: docker/login-action@v3
         with:
