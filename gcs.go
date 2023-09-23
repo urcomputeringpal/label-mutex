@@ -24,11 +24,12 @@ type gcsLocker struct {
 
 type customTransport struct {
 	Transport http.RoundTripper
+	Endpoint  string
 }
 
 func (c *customTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	if req.URL.Host == "storage.googleapis.com" {
-		newURL, _ := url.Parse("https://fake-gcs-server:4443")
+		newURL, _ := url.Parse(c.Endpoint)
 		req.URL.Scheme = newURL.Scheme
 		req.URL.Host = newURL.Host
 	}
@@ -43,11 +44,16 @@ func NewGCSLocker(bucket string, name string) (ll *gcsLocker, err error) {
 	if customEndpoint != "" {
 		// create a transport that skips TLS verification
 		insecure := &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: os.Getenv("GCS_INSECURE_SKIP_VERIFY") == "true"},
 		}
-		client = &http.Client{Transport: &customTransport{Transport: &loghttp.Transport{
-			Transport: insecure,
-		}}}
+		client = &http.Client{
+			Transport: &customTransport{
+				Endpoint: customEndpoint,
+				Transport: &loghttp.Transport{
+					Transport: insecure,
+				},
+			},
+		}
 		locker = gcslock.NewWithClient(client, bucket, name)
 	} else {
 		client = http.DefaultClient

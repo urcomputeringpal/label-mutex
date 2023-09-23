@@ -30,5 +30,5 @@
       "version": "latest"
     }
   },
-  "onCreateCommand": "./hack/create-local-table.sh && ./hack/create-local-bucket.sh"
+  "onCreateCommand": "./hack/create-local-table.sh || true; ./hack/create-local-bucket.sh || true;"
 }

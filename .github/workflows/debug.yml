@@ -10,6 +10,7 @@ env:
   AWS_DEFAULT_REGION: us-east-1
   AWS_DYNAMODB_ENDPOINT_URL: http://dynamodb:8000
   GCS_ENDPOINT_URL: https://localhost:4443
+  GCS_INSECURE_SKIP_VERIFY: "true"
 jobs:
   dynamo:
     name: Dynamo

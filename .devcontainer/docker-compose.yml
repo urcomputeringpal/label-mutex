@@ -22,6 +22,7 @@ services:
       AWS_PAGER: ""
       AWS_DYNAMODB_ENDPOINT_URL: http://dynamodb:8000
       GCS_ENDPOINT_URL: https://fake-gcs-server:4443
+      GCS_INSECURE_SKIP_VERIFY: "true"
   dynamodb:
     image: amazon/dynamodb-local
     ports:
