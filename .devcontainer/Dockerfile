@@ -1,6 +1,6 @@
 # https://github.com/microsoft/vscode-dev-containers/tree/master/containers/go
 
-FROM mcr.microsoft.com/vscode/devcontainers/go:1.15
+FROM mcr.microsoft.com/vscode/devcontainers/go:1.15@sha256:38fdfa9710c83469c11009819d079bbbf88a799a0c1887b62a31ccce66bef621
 
 # [Option] Install Node.js
 ARG INSTALL_NODE="true"
