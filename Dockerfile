@@ -1,4 +1,5 @@
 # Copyright 2020 Seth Vargo
+# Copyright 2023 Ur Computering Pal, LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +14,7 @@
 # limitations under the License.
 
 # Specify the version of Go to use
-FROM golang:1.15 as builder
+FROM golang:1.21 as builder
 
 # Install upx (upx.github.io) to compress the compiled action
 RUN apt-get update && apt-get -y install upx
