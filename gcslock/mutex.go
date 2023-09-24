@@ -28,6 +28,7 @@ import (
 
 	"log"
 
+	"github.com/motemen/go-loghttp"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2/google"
 )
@@ -181,7 +182,13 @@ func (m *mutex) ReadValue(ctx context.Context, bucket, object string) (string, e
 // httpClient is overwritten in tests
 var httpClient = func(ctx context.Context) (*http.Client, error) {
 	const scope = "https://www.googleapis.com/auth/devstorage.full_control"
-	return google.DefaultClient(ctx, scope)
+	client, err := google.DefaultClient(ctx, scope)
+	if err != nil {
+		return nil, err
+	}
+	// TODO maybe conditionally?
+	client.Transport = &loghttp.Transport{}
+	return client, nil
 }
 
 // New creates a GCS-based sync.Locker.

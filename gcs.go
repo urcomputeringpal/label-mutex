@@ -56,10 +56,10 @@ func NewGCSLocker(bucket string, name string) (ll *gcsLocker, err error) {
 		}
 		locker = gcslock.NewWithClient(client, bucket, name)
 	} else {
-		client = &http.Client{
-			Transport: &loghttp.Transport{},
+		locker, err = gcslock.New(context.Background(), bucket, name)
+		if err != nil {
+			return nil, err
 		}
-		locker = gcslock.NewWithClient(client, bucket, name)
 	}
 	ll = &gcsLocker{
 		lock:   locker,
