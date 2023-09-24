@@ -103,6 +103,9 @@ func (m *mutex) ContextLockWithValue(ctx context.Context, value string) error {
 			if res.StatusCode == 200 {
 				return nil
 			}
+			if res.StatusCode == 401 {
+				return fmt.Errorf("unauthorized")
+			}
 		} else {
 			log.Printf("unexpected error: %+v", err)
 		}
@@ -170,12 +173,6 @@ func (m *mutex) ReadValue(ctx context.Context, bucket, object string) (string, e
 		return "", nil
 	}
 	if res.StatusCode != 200 {
-		// print the http request and response headers for debugging
-		for name, values := range req.Header {
-			for _, value := range values {
-				fmt.Printf("Request %s: %s\n", name, value)
-			}
-		}
 		for name, values := range res.Header {
 			for _, value := range values {
 				fmt.Printf("Response %s: %s\n", name, value)
@@ -199,7 +196,11 @@ var httpClient = func(ctx context.Context) (*http.Client, error) {
 		return nil, err
 	}
 	// TODO maybe conditionally?
-	client.Transport = &loghttp.Transport{}
+	client.Transport = &loghttp.Transport{
+		LogRequest: func(req *http.Request) {
+			log.Printf("--> %s %s %+v", req.Method, req.URL, req.Header)
+		},
+	}
 	return client, nil
 }
 
