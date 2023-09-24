@@ -20,10 +20,13 @@ package gcslock
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"sync"
 	"time"
+
+	"log"
 
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2/google"
@@ -99,6 +102,8 @@ func (m *mutex) ContextLockWithValue(ctx context.Context, value string) error {
 			if res.StatusCode == 200 {
 				return nil
 			}
+		} else {
+			log.Printf("unexpected status code %d", res.StatusCode)
 		}
 		select {
 		case <-time.After(backoff):
@@ -166,9 +171,11 @@ func (m *mutex) ReadValue(ctx context.Context, bucket, object string) (string, e
 	if res.StatusCode != 200 {
 		return "", fmt.Errorf("unexpected status code %d", res.StatusCode)
 	}
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(res.Body)
-	return buf.String(), nil
+	bodyBytes, err := io.ReadAll(res.Body)
+	if err != nil {
+		return "", err
+	}
+	return string(bodyBytes), nil
 }
 
 // httpClient is overwritten in tests
