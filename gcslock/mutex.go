@@ -103,7 +103,7 @@ func (m *mutex) ContextLockWithValue(ctx context.Context, value string) error {
 				return nil
 			}
 		} else {
-			log.Printf("unexpected status code %d", res.StatusCode)
+			log.Printf("unexpected error: %+v", err)
 		}
 		select {
 		case <-time.After(backoff):
