@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/aws/aws-sdk-go v1.33.0
 	github.com/google/go-github/v32 v32.1.0
-	github.com/google/uuid v1.1.2
+	github.com/google/uuid v1.3.1
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/motemen/go-loghttp v0.0.0-20170804080138-974ac5ceac27
 	github.com/sethvargo/go-githubactions v1.1.0
