@@ -35,7 +35,7 @@ on:
           LOCKED: ${{ steps.label-mutex.outputs.locked }}
           LOCK_URL: ${{ steps.label-mutex.outputs.html_url }}
         run: |
-          if [ "$LOCKED" == "true" ] && [ $PR_URL" != "$LOCK_URL" ]; then
+          if [ "$LOCKED" == "true" ] && [ "$PR_URL" != "$LOCK_URL" ]; then
             echo "::warning ::Couldn't obtain a lock on staging. Someone may already be using it: $LOCK_URL"
             exit 1
           fi
