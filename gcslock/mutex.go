@@ -170,6 +170,18 @@ func (m *mutex) ReadValue(ctx context.Context, bucket, object string) (string, e
 		return "", nil
 	}
 	if res.StatusCode != 200 {
+		// print the http request and response headers for debugging
+		for name, values := range req.Header {
+			for _, value := range values {
+				fmt.Printf("Request %s: %s\n", name, value)
+			}
+		}
+		for name, values := range res.Header {
+			for _, value := range values {
+				fmt.Printf("Response %s: %s\n", name, value)
+			}
+		}
+
 		return "", fmt.Errorf("unexpected status code %d", res.StatusCode)
 	}
 	bodyBytes, err := io.ReadAll(res.Body)
