@@ -75,10 +75,13 @@ func (ll *gcsLocker) Lock(uri string) (bool, string, error) {
 	contextWithTimeout, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 	log.Printf("Reading current lock value for %s ...\n", ll.name)
-	value, err := ll.lock.ReadValue(contextWithTimeout, ll.bucket, ll.name)
-	if value != "" {
-		log.Printf("Lock already held by %s\n", value)
-		return false, value, err
+	value, _ := ll.lock.ReadValue(contextWithTimeout, ll.bucket, ll.name)
+	if value == uri {
+		log.Printf("Lock already held by %s, returning true\n", uri)
+		return true, uri, nil
+	} else if value != "" {
+		log.Printf("Lock already held by %s, returning false\n", value)
+		return false, value, nil
 	}
 	log.Printf("Attempting to lock %s with value of %s ...\n", ll.name, uri)
 	var resultErr *multierror.Error
