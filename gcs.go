@@ -17,7 +17,6 @@ import (
 
 type gcsLocker struct {
 	lock   gcslock.ContextLocker
-	client *http.Client
 	name   string
 	bucket string
 }
@@ -63,7 +62,6 @@ func NewGCSLocker(bucket string, name string) (ll *gcsLocker, err error) {
 	}
 	ll = &gcsLocker{
 		lock:   locker,
-		client: client,
 		name:   name,
 		bucket: bucket,
 	}

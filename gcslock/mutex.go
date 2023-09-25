@@ -28,7 +28,6 @@ import (
 
 	"log"
 
-	"github.com/motemen/go-loghttp"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2/google"
 )
@@ -194,12 +193,6 @@ var httpClient = func(ctx context.Context) (*http.Client, error) {
 	client, err := google.DefaultClient(ctx, scope)
 	if err != nil {
 		return nil, err
-	}
-	// TODO maybe conditionally?
-	client.Transport = &loghttp.Transport{
-		LogRequest: func(req *http.Request) {
-			log.Printf("--> %s %s %+v", req.Method, req.URL, req.Header)
-		},
 	}
 	return client, nil
 }
