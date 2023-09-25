@@ -74,6 +74,12 @@ func NewGCSLocker(bucket string, name string) (ll *gcsLocker, err error) {
 func (ll *gcsLocker) Lock(uri string) (bool, string, error) {
 	contextWithTimeout, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
+	log.Printf("Reading current lock value for %s ...\n", ll.name)
+	value, err := ll.lock.ReadValue(contextWithTimeout, ll.bucket, ll.name)
+	if value != "" {
+		log.Printf("Lock already held by %s\n", value)
+		return false, value, err
+	}
 	log.Printf("Attempting to lock %s with value of %s ...\n", ll.name, uri)
 	var resultErr *multierror.Error
 	fistWriteErr := ll.lock.ContextLockWithValue(contextWithTimeout, uri)
@@ -119,4 +125,8 @@ func (ll *gcsLocker) Read() (string, error) {
 	contextWithTimeout, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 	return ll.lock.ReadValue(contextWithTimeout, ll.bucket, ll.name)
+}
+
+func (ll *gcsLocker) Provider() string {
+	return "gcs"
 }

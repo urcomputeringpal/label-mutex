@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"log"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/google/uuid"
@@ -55,6 +56,10 @@ func (l *racyMockLocker) Read() (string, error) {
 	return l.value, nil
 }
 
+func (l *racyMockLocker) Provider() string {
+	return "racyMockLocker"
+}
+
 func uuidLocker() URILocker {
 	localDynamoLocker, err := NewDynamoURILocker("label-mutex", "staging", fmt.Sprintf("%v", uuid.New()))
 	if err != nil {
@@ -84,173 +89,174 @@ type labelMutexTest struct {
 	htmlURLOutput  string
 }
 
-var URILockerOne URILocker
-var URILockerTwo URILocker
 var tests []labelMutexTest
 
 func init() {
-	URILockerOne = uuidLocker()
-	URILockerTwo = gcsUUIDLocker()
-	tests = []labelMutexTest{
-		// try to read it
-		{
-			eventFilename:  "testdata/push.json",
-			eventName:      "push",
-			label:          "staging",
-			issuesClient:   &happyPathLabelClient{},
-			uriLocker:      URILockerOne,
-			err:            false,
-			locked:         false,
-			lockedOutput:   "false",
-			unlockedOutput: "true",
-			htmlURLOutput:  "",
-		},
-		{
-			eventFilename:  "testdata/1/pull_request.synchronize.json",
-			eventName:      "pull_request",
-			label:          "staging",
-			issuesClient:   &happyPathLabelClient{},
-			uriLocker:      &racyMockLocker{},
-			err:            false,
-			locked:         false,
-			lockedOutput:   "false",
-			unlockedOutput: "false",
-			htmlURLOutput:  "",
-		},
-		{
-			eventFilename:  "testdata/1/pull_request.labeled.json",
-			eventName:      "pull_request",
-			label:          "staging",
-			issuesClient:   &happyPathLabelClient{},
-			uriLocker:      &racyMockLocker{},
-			err:            false,
-			locked:         true,
-			lockedOutput:   "true",
-			unlockedOutput: "false",
-			htmlURLOutput:  "https://github.com/urcomputeringpal/label-mutex/pull/1",
-		},
-		// add the label and obtain the lock
-		{
-			eventFilename:  "testdata/1/pull_request.labeled.json",
-			eventName:      "pull_request",
-			label:          "staging",
-			issuesClient:   &happyPathLabelClient{},
-			uriLocker:      URILockerOne,
-			err:            false,
-			locked:         true,
-			lockedOutput:   "true",
-			unlockedOutput: "false",
-			htmlURLOutput:  "https://github.com/urcomputeringpal/label-mutex/pull/1",
-		},
-		// add the label again
-		{
-			eventFilename:  "testdata/1/pull_request.labeled.json",
-			eventName:      "pull_request",
-			label:          "staging",
-			issuesClient:   &happyPathLabelClient{},
-			uriLocker:      URILockerOne,
-			err:            false,
-			locked:         true,
-			lockedOutput:   "true",
-			unlockedOutput: "false",
-			htmlURLOutput:  "https://github.com/urcomputeringpal/label-mutex/pull/1",
-		},
-		// try to clobber it
-		{
-			eventFilename:  "testdata/2/pull_request.labeled.json",
-			eventName:      "pull_request",
-			label:          "staging",
-			issuesClient:   &happyPathLabelClient{},
-			uriLocker:      URILockerOne,
-			err:            false,
-			locked:         true,
-			lockedOutput:   "true",
-			unlockedOutput: "false",
-			htmlURLOutput:  "https://github.com/urcomputeringpal/label-mutex/pull/1",
-		},
-		// sync the pr
-		{
-			eventFilename:  "testdata/1/pull_request.synchronize_with_labels.json",
-			eventName:      "pull_request",
-			label:          "staging",
-			issuesClient:   &happyPathLabelClient{},
-			uriLocker:      URILockerOne,
-			err:            false,
-			locked:         true,
-			lockedOutput:   "true",
-			unlockedOutput: "false",
-			htmlURLOutput:  "https://github.com/urcomputeringpal/label-mutex/pull/1",
-		},
-		// try to read it
-		{
-			eventFilename:  "testdata/push.json",
-			eventName:      "push",
-			label:          "staging",
-			issuesClient:   &happyPathLabelClient{},
-			uriLocker:      URILockerOne,
-			err:            false,
-			locked:         true,
-			lockedOutput:   "true",
-			unlockedOutput: "false",
-			htmlURLOutput:  "https://github.com/urcomputeringpal/label-mutex/pull/1",
-		},
-		// try to remove it from a PR that doesn't have it
-		{
-			eventFilename:  "testdata/2/pull_request.unlabeled.json",
-			eventName:      "pull_request",
-			label:          "staging",
-			issuesClient:   &happyPathLabelClient{},
-			uriLocker:      URILockerOne,
-			err:            false,
-			locked:         true,
-			lockedOutput:   "true",
-			unlockedOutput: "false",
-			htmlURLOutput:  "https://github.com/urcomputeringpal/label-mutex/pull/1",
-		},
-		// close to remove the first lock
-		{
-			eventFilename:  "testdata/1/pull_request.closed.json",
-			eventName:      "pull_request",
-			label:          "staging",
-			issuesClient:   &happyPathLabelClient{},
-			uriLocker:      URILockerOne,
-			err:            false,
-			locked:         false,
-			lockedOutput:   "false",
-			unlockedOutput: "true",
-			htmlURLOutput:  "",
-		},
-		{
-			eventFilename:  "testdata/1/pull_request.labeled.json",
-			eventName:      "pull_request",
-			label:          "staging",
-			issuesClient:   &happyPathLabelClient{},
-			uriLocker:      URILockerTwo,
-			err:            false,
-			locked:         true,
-			lockedOutput:   "true",
-			unlockedOutput: "false",
-			htmlURLOutput:  "https://github.com/urcomputeringpal/label-mutex/pull/1",
-		},
-		{
-			eventFilename:  "testdata/1/pull_request.unlabeled.json",
-			eventName:      "pull_request",
-			label:          "staging",
-			issuesClient:   &happyPathLabelClient{},
-			uriLocker:      URILockerTwo,
-			err:            false,
-			locked:         false,
-			lockedOutput:   "false",
-			unlockedOutput: "true",
-			htmlURLOutput:  "",
-		},
+	var lockers []URILocker = []URILocker{uuidLocker(), gcsUUIDLocker()}
+	var secondaryLockers []URILocker = []URILocker{uuidLocker(), gcsUUIDLocker()}
+	for lockerIndex, locker := range lockers {
+		tests = []labelMutexTest{
+			// try to read it
+			{
+				eventFilename:  "testdata/push.json",
+				eventName:      "push",
+				label:          "staging",
+				issuesClient:   &happyPathLabelClient{},
+				uriLocker:      locker,
+				err:            false,
+				locked:         false,
+				lockedOutput:   "false",
+				unlockedOutput: "true",
+				htmlURLOutput:  "",
+			},
+			{
+				eventFilename:  "testdata/1/pull_request.synchronize.json",
+				eventName:      "pull_request",
+				label:          "staging",
+				issuesClient:   &happyPathLabelClient{},
+				uriLocker:      &racyMockLocker{},
+				err:            false,
+				locked:         false,
+				lockedOutput:   "false",
+				unlockedOutput: "false",
+				htmlURLOutput:  "",
+			},
+			{
+				eventFilename:  "testdata/1/pull_request.labeled.json",
+				eventName:      "pull_request",
+				label:          "staging",
+				issuesClient:   &happyPathLabelClient{},
+				uriLocker:      &racyMockLocker{},
+				err:            false,
+				locked:         true,
+				lockedOutput:   "true",
+				unlockedOutput: "false",
+				htmlURLOutput:  "https://github.com/urcomputeringpal/label-mutex/pull/1",
+			},
+			// add the label and obtain the lock
+			{
+				eventFilename:  "testdata/1/pull_request.labeled.json",
+				eventName:      "pull_request",
+				label:          "staging",
+				issuesClient:   &happyPathLabelClient{},
+				uriLocker:      locker,
+				err:            false,
+				locked:         true,
+				lockedOutput:   "true",
+				unlockedOutput: "false",
+				htmlURLOutput:  "https://github.com/urcomputeringpal/label-mutex/pull/1",
+			},
+			// add the label again
+			{
+				eventFilename:  "testdata/1/pull_request.labeled.json",
+				eventName:      "pull_request",
+				label:          "staging",
+				issuesClient:   &happyPathLabelClient{},
+				uriLocker:      locker,
+				err:            false,
+				locked:         true,
+				lockedOutput:   "true",
+				unlockedOutput: "false",
+				htmlURLOutput:  "https://github.com/urcomputeringpal/label-mutex/pull/1",
+			},
+			// try to clobber it
+			{
+				eventFilename:  "testdata/2/pull_request.labeled.json",
+				eventName:      "pull_request",
+				label:          "staging",
+				issuesClient:   &happyPathLabelClient{},
+				uriLocker:      locker,
+				err:            false,
+				locked:         true,
+				lockedOutput:   "true",
+				unlockedOutput: "false",
+				htmlURLOutput:  "https://github.com/urcomputeringpal/label-mutex/pull/1",
+			},
+			// sync the pr
+			{
+				eventFilename:  "testdata/1/pull_request.synchronize_with_labels.json",
+				eventName:      "pull_request",
+				label:          "staging",
+				issuesClient:   &happyPathLabelClient{},
+				uriLocker:      locker,
+				err:            false,
+				locked:         true,
+				lockedOutput:   "true",
+				unlockedOutput: "false",
+				htmlURLOutput:  "https://github.com/urcomputeringpal/label-mutex/pull/1",
+			},
+			// try to read it
+			{
+				eventFilename:  "testdata/push.json",
+				eventName:      "push",
+				label:          "staging",
+				issuesClient:   &happyPathLabelClient{},
+				uriLocker:      locker,
+				err:            false,
+				locked:         true,
+				lockedOutput:   "true",
+				unlockedOutput: "false",
+				htmlURLOutput:  "https://github.com/urcomputeringpal/label-mutex/pull/1",
+			},
+			// try to remove it from a PR that doesn't have it
+			{
+				eventFilename:  "testdata/2/pull_request.unlabeled.json",
+				eventName:      "pull_request",
+				label:          "staging",
+				issuesClient:   &happyPathLabelClient{},
+				uriLocker:      locker,
+				err:            false,
+				locked:         true,
+				lockedOutput:   "true",
+				unlockedOutput: "false",
+				htmlURLOutput:  "https://github.com/urcomputeringpal/label-mutex/pull/1",
+			},
+			// close to remove the first lock
+			{
+				eventFilename:  "testdata/1/pull_request.closed.json",
+				eventName:      "pull_request",
+				label:          "staging",
+				issuesClient:   &happyPathLabelClient{},
+				uriLocker:      locker,
+				err:            false,
+				locked:         false,
+				lockedOutput:   "false",
+				unlockedOutput: "true",
+				htmlURLOutput:  "",
+			},
+			// Can lock and unlock if given a totally different locker
+			{
+				eventFilename:  "testdata/1/pull_request.labeled.json",
+				eventName:      "pull_request",
+				label:          "staging",
+				issuesClient:   &happyPathLabelClient{},
+				uriLocker:      secondaryLockers[lockerIndex],
+				err:            false,
+				locked:         true,
+				lockedOutput:   "true",
+				unlockedOutput: "false",
+				htmlURLOutput:  "https://github.com/urcomputeringpal/label-mutex/pull/1",
+			},
+			{
+				eventFilename:  "testdata/1/pull_request.unlabeled.json",
+				eventName:      "pull_request",
+				label:          "staging",
+				issuesClient:   &happyPathLabelClient{},
+				uriLocker:      secondaryLockers[lockerIndex],
+				err:            false,
+				locked:         false,
+				lockedOutput:   "false",
+				unlockedOutput: "true",
+				htmlURLOutput:  "",
+			},
+		}
 	}
 }
 
 func TestTable(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.eventFilename, func(t *testing.T) {
-			event, err := ioutil.ReadFile(tt.eventFilename)
+			event, err := os.ReadFile(tt.eventFilename)
 			if err != nil {
 				t.Errorf("%s: %+v", tt.eventFilename, err)
 				return
@@ -264,28 +270,29 @@ func TestTable(t *testing.T) {
 				eventName:    tt.eventName,
 				label:        "staging",
 			}
+			log.Printf("TestTable %s (%s)", tt.eventFilename, tt.uriLocker.Provider())
 			err = lm.process()
 			if !tt.err && err != nil {
-				t.Errorf("%s: %+v", tt.eventFilename, err)
+				t.Errorf("%s (%s): %+v", tt.eventFilename, tt.uriLocker.Provider(), tt.err)
 				return
 			}
 			if tt.err && err == nil {
-				t.Errorf("%s: expected an error, didn't get one", tt.eventFilename)
+				t.Errorf("%s (%s): expected an error, didn't get one", tt.eventFilename, tt.uriLocker.Provider())
 				return
 			}
 
 			if lm.locked != tt.locked {
-				t.Errorf("%s: locked: got %v, want %v", tt.eventFilename, lm.locked, tt.locked)
+				t.Errorf("%s (%s): locked: got %v, want %v", tt.eventFilename, tt.uriLocker.Provider(), lm.locked, tt.locked)
 			}
 			output := lm.output()
 			if output["locked"] != tt.lockedOutput {
-				t.Errorf("%s: outputs.locked: got %v, want %v", tt.eventFilename, output["locked"], tt.lockedOutput)
+				t.Errorf("%s (%s): outputs.locked: got %v, want %v", tt.eventFilename, tt.uriLocker.Provider(), output["locked"], tt.lockedOutput)
 			}
 			if output["unlocked"] != tt.unlockedOutput {
-				t.Errorf("%s: outputs.unlocked: got %v, want %v", tt.eventFilename, output["unlocked"], tt.unlockedOutput)
+				t.Errorf("%s (%s): outputs.unlocked: got %v, want %v", tt.eventFilename, tt.uriLocker.Provider(), output["unlocked"], tt.unlockedOutput)
 			}
 			if output["html_url"] != tt.htmlURLOutput {
-				t.Errorf("%s: outputs.html_url: got %v, want %v", tt.eventFilename, output["html_url"], tt.htmlURLOutput)
+				t.Errorf("%s (%s): outputs.html_url: got %v, want %v", tt.eventFilename, tt.uriLocker.Provider(), output["html_url"], tt.htmlURLOutput)
 			}
 		})
 	}

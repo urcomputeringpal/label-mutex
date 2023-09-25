@@ -97,3 +97,7 @@ func (ll *dynamoUriLocker) Read() (string, error) {
 	}
 	return string(value.BytesValue()), nil
 }
+
+func (ll *dynamoUriLocker) Provider() string {
+	return "dynamo"
+}
