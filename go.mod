@@ -5,6 +5,7 @@ go 1.21
 require (
 	github.com/aws/aws-sdk-go v1.33.0
 	github.com/google/go-github/v32 v32.1.0
+	github.com/google/go-github/v55 v55.0.0
 	github.com/google/uuid v1.3.1
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/motemen/go-loghttp v0.0.0-20170804080138-974ac5ceac27
@@ -17,7 +18,7 @@ require (
 require (
 	cloud.google.com/go v0.65.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
-	github.com/google/go-querystring v1.0.0 // indirect
+	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/jmespath/go-jmespath v0.3.0 // indirect
 	github.com/motemen/go-nuts v0.0.0-20220604134737-2658d0104f31 // indirect
