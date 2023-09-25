@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/motemen/go-loghttp"
 	"github.com/urcomputeringpal/label-mutex/gcslock"
+	"golang.org/x/oauth2/google"
 )
 
 type gcsLocker struct {
@@ -55,10 +56,12 @@ func NewGCSLocker(bucket string, name string) (ll *gcsLocker, err error) {
 		}
 		locker = gcslock.NewWithClient(client, bucket, name)
 	} else {
-		locker, err = gcslock.New(context.Background(), bucket, name)
+		const scope = "https://www.googleapis.com/auth/devstorage.full_control"
+		client, err := google.DefaultClient(context.TODO(), scope)
 		if err != nil {
 			return nil, err
 		}
+		locker = gcslock.NewWithClient(client, bucket, name)
 	}
 	ll = &gcsLocker{
 		lock:   locker,
