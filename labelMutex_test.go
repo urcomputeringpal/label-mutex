@@ -10,7 +10,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/google/go-github/v32/github"
+	"github.com/google/go-github/v55/github"
 )
 
 var (
