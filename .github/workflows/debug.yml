@@ -43,14 +43,14 @@ jobs:
     runs-on: ubuntu-latest
     services:
       fake-gcs-server:
-        image: ghcr.io/urcomputeringpal/label-mutex-fake-gcs-server:pr-12
+        image: ghcr.io/urcomputeringpal/label-mutex-fake-gcs-server:pr-12@sha256:5fdc1fd0914dfda02fef3e85a5b369cd96041ff6e8a57cc8796d264896fcf5ef
         credentials:
           username: ${{ github.actor }}
           password: ${{ secrets.github_token }}
         ports:
           - 4443:4443
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4
       - run: |
           ./hack/create-local-bucket.sh localhost
         timeout-minutes: 1
@@ -73,7 +73,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       fake-gcs-server:
-        image: ghcr.io/urcomputeringpal/label-mutex-fake-gcs-server:pr-12
+        image: ghcr.io/urcomputeringpal/label-mutex-fake-gcs-server:pr-12@sha256:5fdc1fd0914dfda02fef3e85a5b369cd96041ff6e8a57cc8796d264896fcf5ef
         credentials:
           username: ${{ github.actor }}
           password: ${{ secrets.github_token }}
