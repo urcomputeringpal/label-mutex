@@ -109,6 +109,7 @@ cat <<- EOM
       permissions:
         contents: read
         id-token: write
+        pull-requests: write
       steps:
         - uses: actions/checkout@v4
         - id: auth
