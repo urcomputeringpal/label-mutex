@@ -20,10 +20,13 @@ package gcslock
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"sync"
 	"time"
+
+	"log"
 
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2/google"
@@ -99,6 +102,11 @@ func (m *mutex) ContextLockWithValue(ctx context.Context, value string) error {
 			if res.StatusCode == 200 {
 				return nil
 			}
+			if res.StatusCode == 401 {
+				return fmt.Errorf("unauthorized")
+			}
+		} else {
+			log.Printf("unexpected error: %+v", err)
 		}
 		select {
 		case <-time.After(backoff):
@@ -166,15 +174,21 @@ func (m *mutex) ReadValue(ctx context.Context, bucket, object string) (string, e
 	if res.StatusCode != 200 {
 		return "", fmt.Errorf("unexpected status code %d", res.StatusCode)
 	}
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(res.Body)
-	return buf.String(), nil
+	bodyBytes, err := io.ReadAll(res.Body)
+	if err != nil {
+		return "", err
+	}
+	return string(bodyBytes), nil
 }
 
 // httpClient is overwritten in tests
 var httpClient = func(ctx context.Context) (*http.Client, error) {
 	const scope = "https://www.googleapis.com/auth/devstorage.full_control"
-	return google.DefaultClient(ctx, scope)
+	client, err := google.DefaultClient(ctx, scope)
+	if err != nil {
+		return nil, err
+	}
+	return client, nil
 }
 
 // New creates a GCS-based sync.Locker.

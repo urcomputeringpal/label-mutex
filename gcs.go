@@ -13,11 +13,11 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/motemen/go-loghttp"
 	"github.com/urcomputeringpal/label-mutex/gcslock"
+	"golang.org/x/oauth2/google"
 )
 
 type gcsLocker struct {
 	lock   gcslock.ContextLocker
-	client *http.Client
 	name   string
 	bucket string
 }
@@ -56,15 +56,15 @@ func NewGCSLocker(bucket string, name string) (ll *gcsLocker, err error) {
 		}
 		locker = gcslock.NewWithClient(client, bucket, name)
 	} else {
-		client = http.DefaultClient
-		locker, err = gcslock.New(context.Background(), bucket, name)
+		const scope = "https://www.googleapis.com/auth/devstorage.full_control"
+		client, err := google.DefaultClient(context.TODO(), scope)
 		if err != nil {
 			return nil, err
 		}
+		locker = gcslock.NewWithClient(client, bucket, name)
 	}
 	ll = &gcsLocker{
 		lock:   locker,
-		client: client,
 		name:   name,
 		bucket: bucket,
 	}
@@ -72,32 +72,34 @@ func NewGCSLocker(bucket string, name string) (ll *gcsLocker, err error) {
 }
 
 func (ll *gcsLocker) Lock(uri string) (bool, string, error) {
-	contextWithTimeout, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	contextWithTimeout, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
+	log.Printf("Reading current lock value for %s ...\n", ll.name)
+	value, _ := ll.lock.ReadValue(contextWithTimeout, ll.bucket, ll.name)
+	if value == uri {
+		log.Printf("Lock already held by %s, returning true\n", uri)
+		return true, uri, nil
+	} else if value != "" {
+		log.Printf("Lock already held by %s, returning false\n", value)
+		return false, value, nil
+	}
 	log.Printf("Attempting to lock %s with value of %s ...\n", ll.name, uri)
 	var resultErr *multierror.Error
 	fistWriteErr := ll.lock.ContextLockWithValue(contextWithTimeout, uri)
 	if fistWriteErr != nil {
-		resultErr = multierror.Append(resultErr, fistWriteErr)
 		log.Printf("couldn't obtain lock outright, trying figure out what the current value is. %+v\n", resultErr.ErrorOrNil())
 		value, getErr := ll.Read()
 		if getErr != nil {
+			resultErr = multierror.Append(resultErr, fistWriteErr)
 			resultErr = multierror.Append(resultErr, getErr)
 			log.Printf("Error reading current lock value too. %+v\n", resultErr.ErrorOrNil())
 			return false, "", resultErr.ErrorOrNil()
 		}
-		if value == uri {
-			confirmErr := ll.lock.ContextLockWithValue(contextWithTimeout, uri)
-			if confirmErr == nil {
-				log.Printf("Lock confirmed: %+v, %+v", value, resultErr.ErrorOrNil())
-				return false, uri, nil
-			}
-			resultErr = multierror.Append(resultErr, confirmErr)
-			log.Printf("Error confirming lock: %+v, %+v", value, resultErr.ErrorOrNil())
-			return false, "", resultErr.ErrorOrNil()
+		if value != uri {
+			resultErr = multierror.Append(resultErr, fistWriteErr)
+			log.Printf("Lock value mismatch found. %+v\n", resultErr.ErrorOrNil())
+			return false, value, nil
 		}
-		log.Printf("Lock value mismatch found. %+v\n", resultErr.ErrorOrNil())
-		return false, value, nil
 	}
 	log.Printf("Lock obtained: %+v, %+v", uri, resultErr.ErrorOrNil())
 	return true, uri, resultErr.ErrorOrNil()
@@ -113,7 +115,7 @@ func (ll *gcsLocker) Unlock(uri string) (string, error) {
 		return value, fmt.Errorf("couldn't unlock with provided value of %s, lock currently held by %s", uri, value)
 	}
 	log.Printf("Lock confirmed, unlocking...")
-	contextWithTimeout, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	contextWithTimeout, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 	err := ll.lock.ContextUnlock(contextWithTimeout)
 	if err != nil {
@@ -124,7 +126,11 @@ func (ll *gcsLocker) Unlock(uri string) (string, error) {
 }
 
 func (ll *gcsLocker) Read() (string, error) {
-	contextWithTimeout, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	contextWithTimeout, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 	return ll.lock.ReadValue(contextWithTimeout, ll.bucket, ll.name)
+}
+
+func (ll *gcsLocker) Provider() string {
+	return "gcs"
 }

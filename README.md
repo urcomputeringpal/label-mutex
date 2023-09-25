@@ -15,9 +15,9 @@ on:
       - synchronize
       - reopened
 
-#jobs:
-#  deploy:
-#    steps:
+      #jobs:
+      #  deploy:
+      #    steps:
 
       - uses: urcomputeringpal/label-mutex@v0.3.0
         id: label-mutex
@@ -31,11 +31,11 @@ on:
           lock: staging
       - name: fail-if-not-locked
         env:
-          PR_URL: ${{ github.event.pull_request.html_url }
+          PR_URL: ${{ github.event.pull_request.html_url }}
           LOCKED: ${{ steps.label-mutex.outputs.locked }}
           LOCK_URL: ${{ steps.label-mutex.outputs.html_url }}
         run: |
-          if [ "$LOCKED" == "true" ] && [ $PR_URL" != "$LOCK_URL" ]; then
+          if [ "$LOCKED" == "true" ] && [ "$PR_URL" != "$LOCK_URL" ]; then
             echo "::warning ::Couldn't obtain a lock on staging. Someone may already be using it: $LOCK_URL"
             exit 1
           fi
@@ -50,9 +50,9 @@ on:
       - closed
       - unlabeled
 
-#jobs:
-#  unlock:
-#    steps:
+      #jobs:
+      #  unlock:
+      #    steps:
 
       - uses: urcomputeringpal/label-mutex@v0.3.0
         id: label-mutex
@@ -68,7 +68,9 @@ on:
 
 ## Setup
 
-## Lock table
+### AWS
+
+#### Lock table
 
 ```hcl
 resource "aws_dynamodb_table" "label_mutex" {
@@ -94,7 +96,7 @@ resource "aws_dynamodb_table" "label_mutex" {
 }
 ```
 
-### IAM
+#### IAM
 
 Ensure your AWS user has the following permissions on the above table:
 
@@ -105,6 +107,61 @@ dynamodb:DeleteItem
 dynamodb:UpdateItem
 ```
 
+## GCS
+
+- Setup a new project at the [Google APIs Console](https://console.developers.google.com/) and enable the Cloud Storage API.
+- Install the [Google Cloud SDK tool](https://cloud.google.com/sdk/downloads) and configure your project and your OAuth credentials.
+- Run the following command to setup a bucket and OIDC config for GitHub Actions in your current project:
+
+```bash
+ PROJECT_ID=$(gcloud config get-value project) \
+ PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)') \
+ REPONAME=$(basename $(git rev-parse --show-toplevel)) \
+ hack/gcloud-setup.sh
+```
+
+Use the YAML output by that script, or refer to this example:
+
+```yaml
+# Example workflow
+jobs:
+  gcloud-authenticated-job:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - id: auth
+        name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: projects/${{ env.PROJECT_NUMBER }}/locations/${{ env.LOCATION }}/workloadIdentityPools/${{ env.POOL_NAME }}/providers/${{ env.PROVIDER_NAME }}
+          service_account: ${ env.SERVICE_ACCOUNT }}
+          create_credentials_file: true
+          export_environment_variables: true
+          access_token_scopes: https://www.googleapis.com/auth/devstorage.full_control
+      - uses: docker://ghcr.io/urcomputeringpal/label-mutex:v0.4.0
+        id: label-mutex
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          bucket: ${{ env.BUCKET }}
+          lock: example-lock
+          label: example-lock
+          lock: staging
+      - name: fail-if-not-locked
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          LOCKED: ${{ steps.label-mutex.outputs.locked }}
+          LOCK_URL: ${{ steps.label-mutex.outputs.html_url }}
+        run: |
+          if [ "$LOCKED" == "true" ] && [ "$PR_URL" != "$LOCK_URL" ]; then
+            echo "::warning ::Couldn't obtain a lock on staging. Someone may already be using it: $LOCK_URL"
+            exit 1
+          fi
+```
+
 ## Acknowledgements
 
-* https://github.com/sethvargo/go-hello-githubactions
+- https://github.com/sethvargo/go-hello-githubactions
