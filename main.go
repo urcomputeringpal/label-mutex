@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/google/go-github/v32/github"
+	"github.com/google/go-github/v55/github"
 	"github.com/hashicorp/go-multierror"
 	"github.com/sethvargo/go-githubactions"
 	"golang.org/x/oauth2"
