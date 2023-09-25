@@ -119,6 +119,7 @@ cat <<- EOM
             service_account: ${SERVICE_ACCOUNT}
             create_credentials_file: true
             export_environment_variables: true
+            access_token_scopes: https://www.googleapis.com/auth/devstorage.full_control
         - uses: docker://ghcr.io/urcomputeringpal/label-mutex:v0.4.0
           id: label-mutex
           with:
