@@ -28,7 +28,7 @@ services:
     ports:
       - 8000:8000
   fake-gcs-server:
-    image: fsouza/fake-gcs-server:1.47
+    image: fsouza/fake-gcs-server:1.47@sha256:1a5b99d01bac100f84003db8807a3e1cbf5159d6d2acfb31f6f090fa782f386d
     entrypoint: fake-gcs-server
     command:
       - "-host"

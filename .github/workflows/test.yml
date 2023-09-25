@@ -23,7 +23,7 @@ jobs:
         ports:
           - 8000:8000
       fake-gcs-server:
-        image: ghcr.io/urcomputeringpal/label-mutex-fake-gcs-server:pr-12
+        image: ghcr.io/urcomputeringpal/label-mutex-fake-gcs-server:pr-12@sha256:5fdc1fd0914dfda02fef3e85a5b369cd96041ff6e8a57cc8796d264896fcf5ef
         credentials:
           username: ${{ github.actor }}
           password: ${{ secrets.github_token }}
