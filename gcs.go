@@ -87,15 +87,16 @@ func (ll *gcsLocker) Lock(uri string) (bool, string, error) {
 	var resultErr *multierror.Error
 	fistWriteErr := ll.lock.ContextLockWithValue(contextWithTimeout, uri)
 	if fistWriteErr != nil {
-		resultErr = multierror.Append(resultErr, fistWriteErr)
 		log.Printf("couldn't obtain lock outright, trying figure out what the current value is. %+v\n", resultErr.ErrorOrNil())
 		value, getErr := ll.Read()
 		if getErr != nil {
+			resultErr = multierror.Append(resultErr, fistWriteErr)
 			resultErr = multierror.Append(resultErr, getErr)
 			log.Printf("Error reading current lock value too. %+v\n", resultErr.ErrorOrNil())
 			return false, "", resultErr.ErrorOrNil()
 		}
 		if value != uri {
+			resultErr = multierror.Append(resultErr, fistWriteErr)
 			log.Printf("Lock value mismatch found. %+v\n", resultErr.ErrorOrNil())
 			return false, value, nil
 		}
