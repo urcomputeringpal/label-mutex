@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/http/httptrace"
 	"net/url"
 	"sync"
 	"time"
@@ -96,7 +95,7 @@ func (m *mutex) ContextLockWithValue(ctx context.Context, value string) error {
 			return err
 		}
 		req.Header.Set("content-type", "text/plain")
-		req = req.WithContext(withTraceContext(ctx))
+		req = req.WithContext(ctx)
 		res, err := m.client.Do(req)
 		if err == nil {
 			res.Body.Close()
@@ -137,7 +136,7 @@ func (m *mutex) ContextUnlock(ctx context.Context) error {
 			// Likely malformed URL - retry won't fix so return.
 			return err
 		}
-		req = req.WithContext(withTraceContext(ctx))
+		req = req.WithContext(ctx)
 		res, err := m.client.Do(req)
 		if err == nil {
 			res.Body.Close()
@@ -155,16 +154,6 @@ func (m *mutex) ContextUnlock(ctx context.Context) error {
 	}
 }
 
-func withTraceContext(ctx context.Context) context.Context {
-	trace := &httptrace.ClientTrace{
-        WroteHeaderField: func(key string, value []string) {
-			log.Printf("WroteHeaderField: %s: %s", key, value)
-		},
-		
-    }
-    return httptrace.WithClientTrace(ctx, trace)
-}
-
 // TODO test
 func (m *mutex) ReadValue(ctx context.Context, bucket, object string) (string, error) {
 	url := fmt.Sprintf("%s/b/%s/o/%s?alt=media", storageUnlockURL, bucket, object)
@@ -173,7 +162,7 @@ func (m *mutex) ReadValue(ctx context.Context, bucket, object string) (string, e
 		// Likely malformed URL - retry won't fix so return.
 		return "", err
 	}
-	req = req.WithContext(withTraceContext(ctx))
+	req = req.WithContext(ctx)
 	res, err := m.client.Do(req)
 	if err != nil {
 		return "", err
@@ -183,12 +172,6 @@ func (m *mutex) ReadValue(ctx context.Context, bucket, object string) (string, e
 		return "", nil
 	}
 	if res.StatusCode != 200 {
-		for name, values := range res.Header {
-			for _, value := range values {
-				fmt.Printf("Response %s: %s\n", name, value)
-			}
-		}
-
 		return "", fmt.Errorf("unexpected status code %d", res.StatusCode)
 	}
 	bodyBytes, err := io.ReadAll(res.Body)
