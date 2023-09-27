@@ -190,6 +190,7 @@ github.com/stretchr/testify v1.7.0 h1:nwc3DEeHmmLAfoZucVR881uASk0Mfjw8xYJ99tb5Cc
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/wolfeidau/dynalock v1.3.1 h1:FtdFx28DExJ4qtQqc1wOwrj8ehvTFZ3d0JTcfjUoG7Q=
 github.com/wolfeidau/dynalock v1.3.1/go.mod h1:7r7KMf2MLugISy+GM0CUYLnIXQI0VOGasuCSiV//axc=
+github.com/wolfeidau/dynalock/v2 v2.0.0/go.mod h1:2Obu0DOTfTGKxHJqOyMZu4SxVzZEykhoUGTcSsiiq6Q=
 github.com/yuin/goldmark v1.1.25/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.1.32/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
