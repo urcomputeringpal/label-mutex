@@ -249,6 +249,19 @@ func init() {
 				unlockedOutput: "true",
 				htmlURLOutput:  "",
 			},
+			// close without a lock
+			{
+				eventFilename:  "testdata/2/pull_request.closed.json",
+				eventName:      "pull_request",
+				label:          "staging",
+				issuesClient:   &happyPathLabelClient{},
+				uriLocker:      secondaryLockers[lockerIndex],
+				err:            false,
+				locked:         false,
+				lockedOutput:   "false",
+				unlockedOutput: "true",
+				htmlURLOutput:  "",
+			},
 		}
 	}
 }
