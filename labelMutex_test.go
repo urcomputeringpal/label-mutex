@@ -273,7 +273,7 @@ func TestTable(t *testing.T) {
 			log.Printf("TestTable %s (%s)", tt.eventFilename, tt.uriLocker.Provider())
 			err = lm.process()
 			if !tt.err && err != nil {
-				t.Errorf("%s (%s): %+v", tt.eventFilename, tt.uriLocker.Provider(), tt.err)
+				t.Errorf("%s (%s): %+v", tt.eventFilename, tt.uriLocker.Provider(), err)
 				return
 			}
 			if tt.err && err == nil {
