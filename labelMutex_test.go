@@ -249,6 +249,19 @@ func init() {
 				unlockedOutput: "true",
 				htmlURLOutput:  "",
 			},
+			// close without a lock
+			{
+				eventFilename:  "testdata/2/pull_request.closed.json",
+				eventName:      "pull_request",
+				label:          "staging",
+				issuesClient:   &happyPathLabelClient{},
+				uriLocker:      secondaryLockers[lockerIndex],
+				err:            false,
+				locked:         false,
+				lockedOutput:   "false",
+				unlockedOutput: "true",
+				htmlURLOutput:  "",
+			},
 		}
 	}
 }
@@ -273,7 +286,7 @@ func TestTable(t *testing.T) {
 			log.Printf("TestTable %s (%s)", tt.eventFilename, tt.uriLocker.Provider())
 			err = lm.process()
 			if !tt.err && err != nil {
-				t.Errorf("%s (%s): %+v", tt.eventFilename, tt.uriLocker.Provider(), tt.err)
+				t.Errorf("%s (%s): %+v", tt.eventFilename, tt.uriLocker.Provider(), err)
 				return
 			}
 			if tt.err && err == nil {

@@ -124,7 +124,13 @@ func (lm *LabelMutex) processPR() error {
 			lm.unlocked = true
 		}
 		if existing == "" {
-			resultErr = multierror.Append(resultErr, err)
+			if lm.action == "unlabeled" || lm.action == "closed" {
+				lm.locked = false
+				lm.unlocked = true
+				log.Printf("Lock '%s' was already unlocked  ...\n", lm.label)
+			} else {
+				resultErr = multierror.Append(resultErr, err)
+			}
 		} else {
 			lm.locked = true
 			lm.unlocked = false
