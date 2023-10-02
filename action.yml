@@ -33,5 +33,5 @@ outputs:
     description: URL of the PR holding the lock
 runs:
   using: docker
-  image: Dockerfile
-  # image: 'docker://urcomputeringpal/label-mutex:v0.3.0'
+  # image: Dockerfile
+  image: 'docker://ghcr.io/urcomputeringpal/label-mutex:v0.4.0'
