@@ -19,7 +19,7 @@ on:
       #  deploy:
       #    steps:
 
-      - uses: urcomputeringpal/label-mutex@v0.3.0
+      - uses: urcomputeringpal/label-mutex@v0.4.0
         id: label-mutex
         env:
           AWS_DEFAULT_REGION: us-east-1
@@ -54,7 +54,7 @@ on:
       #  unlock:
       #    steps:
 
-      - uses: urcomputeringpal/label-mutex@v0.3.0
+      - uses: urcomputeringpal/label-mutex@v0.4.0
         id: label-mutex
         env:
           AWS_DEFAULT_REGION: us-east-1
