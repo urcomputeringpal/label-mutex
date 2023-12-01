@@ -7,7 +7,7 @@ require (
 	github.com/google/go-github/v55 v55.0.0
 	github.com/google/uuid v1.3.1
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/motemen/go-loghttp v0.0.0-20170804080138-974ac5ceac27
+	github.com/motemen/go-loghttp v0.0.0-20231107055348-29ae44b293f4
 	github.com/sethvargo/go-githubactions v1.1.0
 	github.com/wolfeidau/dynalock v1.3.1
 	github.com/wolfeidau/dynalock/v2 v2.0.0
