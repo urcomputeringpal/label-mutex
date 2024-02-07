@@ -1,3 +1,3 @@
-FROM fsouza/fake-gcs-server:1.47@sha256:1a5b99d01bac100f84003db8807a3e1cbf5159d6d2acfb31f6f090fa782f386d
+FROM fsouza/fake-gcs-server:1.47@sha256:0eeaaeba5385c7274e8b11a9ff145569799bf17fdb8ba69226a88ff231ad0b44
 
 CMD [ "-host", "0.0.0.0", "-log-level", "trace", "-external-url", "https://localhost:4443", "-backend", "memory" ]
