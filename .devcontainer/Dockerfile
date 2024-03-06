@@ -1,6 +1,6 @@
 # https://github.com/microsoft/vscode-dev-containers/tree/master/containers/go
 
-FROM mcr.microsoft.com/devcontainers/go:1.21-bullseye@sha256:30f84595e36b3d5d67b12f1795f0e78777f4913cfc08d23d8cf51a281d3cdf14
+FROM mcr.microsoft.com/devcontainers/go:1.21-bullseye@sha256:c04402b78ed1a5a7f8eb9b0ff8ec315f996e0193220e56e02274e565eddf6848
 
 RUN apt-get update -y && \
     apt-get install -y curl apt-transport-https ca-certificates gnupg && \
