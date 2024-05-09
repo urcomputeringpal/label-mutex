@@ -19,7 +19,7 @@ FROM golang:1.21@sha256:19600fdcae402165dcdab18cb9649540bde6be7274dedb5d205b2f84
 RUN apt-get update && apt-get install -y xz-utils && rm -rf /var/lib/apt/lists/*
 
 # Install upx (upx.github.io) to compress the compiled action
-RUN curl -L https://github.com/upx/upx/releases/download/v4.1.0/upx-4.1.0-amd64_linux.tar.xz | \
+RUN curl -L https://github.com/upx/upx/releases/download/v4.2.4/upx-4.1.0-amd64_linux.tar.xz | \
     tar -xJv --strip-components=1
 
 # Turn on Go modules support and disable CGO
