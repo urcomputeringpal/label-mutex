@@ -50,7 +50,7 @@ jobs:
         ports:
           - 4443:4443
     steps:
-      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
       - run: |
           ./hack/create-local-bucket.sh localhost
         timeout-minutes: 1
