@@ -24,7 +24,7 @@ services:
       GCS_ENDPOINT_URL: https://fake-gcs-server:4443
       GCS_INSECURE_SKIP_VERIFY: "true"
   dynamodb:
-    image: amazon/dynamodb-local@sha256:c8702bde709520b90930c20ee430d4123cd731da8e544cc4ccae0e2a78ee4fce
+    image: amazon/dynamodb-local@sha256:d7ebddeb60fa418bcda218a6c6a402a58441b2a20d54c9cb1d85fd5194341753
     ports:
       - 8000:8000
   fake-gcs-server:
