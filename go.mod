@@ -12,7 +12,7 @@ require (
 	github.com/wolfeidau/dynalock v1.3.1
 	github.com/wolfeidau/dynalock/v2 v2.0.0
 	golang.org/x/net v0.15.0
-	golang.org/x/oauth2 v0.12.0
+	golang.org/x/oauth2 v0.23.0
 )
 
 require (
