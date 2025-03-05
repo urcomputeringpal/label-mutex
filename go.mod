@@ -1,6 +1,8 @@
 module github.com/urcomputeringpal/label-mutex
 
-go 1.21
+go 1.23.0
+
+toolchain go1.24.0
 
 require (
 	github.com/aws/aws-sdk-go v1.45.19
@@ -12,7 +14,7 @@ require (
 	github.com/wolfeidau/dynalock v1.3.1
 	github.com/wolfeidau/dynalock/v2 v2.0.0
 	golang.org/x/net v0.15.0
-	golang.org/x/oauth2 v0.12.0
+	golang.org/x/oauth2 v0.28.0
 )
 
 require (
