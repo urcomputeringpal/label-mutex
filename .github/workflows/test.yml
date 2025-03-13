@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       dynamodb:
-        image: amazon/dynamodb-local@sha256:c8702bde709520b90930c20ee430d4123cd731da8e544cc4ccae0e2a78ee4fce
+        image: amazon/dynamodb-local@sha256:7c1ce43fddc5d38ce68bbdab7e0ea9df6844a85a3df9b5c905da918c1c276625
         ports:
           - 8000:8000
       fake-gcs-server:
